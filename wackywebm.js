@@ -28,6 +28,10 @@ switch (inputType.toLowerCase()) {
 		type.n = 2
 		type.w = 'Sporadic'
 		break
+	case 'bounce+shutter':
+		type.n = 3
+		type.w = 'Bounce_Shutter'
+		break
 	default:
 		rawVideoPath.unshift(inputType)
 }
@@ -55,7 +59,7 @@ function buildLocations() {
 
 async function main() {
 	// Verify the given path is accessible.
-	if (!videoPath || await fs.promises.access(videoPath)) return console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, sporadic] <input_file>')
+	if (!videoPath || await fs.promises.access(videoPath)) return console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic] <input_file>')
 
 	// Only build the path if temporary location index if the code can move forward. Less to do.
 	buildLocations()
@@ -113,6 +117,9 @@ async function main() {
 				width = index === 0 ? maxWidth : (Math.floor(Math.random() * (maxWidth - delta)) + delta)
 				height = index === 0 ? maxHeight : (Math.floor(Math.random() * (maxHeight - delta)) + delta)
 				break
+			case 3:
+				height = index === 0 ? maxHeight : (Math.floor(Math.abs(Math.cos(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxHeight - delta))) + delta)
+				width = index === 0 ? maxWidth : (Math.floor(Math.abs(Math.sin(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxWidth - delta))) + delta)
 		}
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`)
