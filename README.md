@@ -1,9 +1,13 @@
-# Dependencies
-Requires Nodejs to run, and ffmpeg / ffprobe
+# WackyWebM
 
-# How to run
+This is a simple tool to allow you to create WebM files with changing aspect ratios.
+
+## Dependencies
+* NodeJS
+* ffmpeg 
+* ffprobe
+
+## How to run
 `node wackywebm.js <file>`
 
-You can also tweak the file to taste if you want to change some stuff
-
-sorry this isn't the most professional repo but i'm tired
+You can also tweak the wackywebm.js script to taste if you want to adjust how your file is generated.
