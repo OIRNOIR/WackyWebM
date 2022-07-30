@@ -30,6 +30,7 @@ const input = `"${process.argv.slice(2).join(" ")}"`;
 const delta = 2;
 
 async function main() {
+	if(!input) return console.log("WackyWebM, by OIRNOIR#0032\nUsage: node wackywebm <input_file>");
 	console.log(`Input file: ${input}\nUsing minimum w/h ${delta}px\nGetting framerate...`);
 	const inputFramerateRes = await execa(`ffprobe -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=r_frame_rate ${input}`);
 	const inputFramerate = inputFramerateRes.stdout.replace(/\n/, "");
