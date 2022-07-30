@@ -1,7 +1,9 @@
 # WackyWebM
 
 This is a simple tool to allow you to create WebM files with changing aspect ratios.
+
 `wackywebm.js` - Generates very glitchy random videos
+
 `bouncywebm.js` - Generates bouncing videos, change the rate of bouncing by setting the variable `bouncespersecond` (lower = slower, can be decimals)
 
 ## Dependencies
