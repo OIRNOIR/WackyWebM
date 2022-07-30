@@ -14,7 +14,8 @@ const getFileName = p => path.basename(p, path.extname(p))
 
 // Process input arguments. Assume first argument is the desired output type, and if
 // it matches none, assume part of the rawVideoPath and unshift it back before joining.
-const [inputType, ...rawVideoPath] = process.argv.slice(2), type = { n: 0, w: 'Bounce' }
+const [inputType, ...rawVideoPath] = process.argv.slice(2),
+	type = { n: 0, w: 'Bounce' }
 switch (inputType.toLowerCase()) {
 	case 'bounce':
 		type.n = 0
@@ -59,13 +60,13 @@ function buildLocations() {
 
 async function main() {
 	// Verify the given path is accessible.
-	if (!videoPath || await fs.promises.access(videoPath)) return console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic] <input_file>')
+	if (!videoPath || !fs.existsSync(videoPath)) return console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic] <input_file>')
 
 	// Only build the path if temporary location index if the code can move forward. Less to do.
 	buildLocations()
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
-	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${delta}px.\nExtracting necessary input file info...`);
+	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${delta}px${type.w.includes('Bounce') ? `and bounce speed of ${bouncesPerSecond} per second.` : ''}.\nExtracting necessary input file info...`);
 	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`)
 	// Deconstructor extracts these values and renames them.
 	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate }] } = JSON.parse(videoInfo.stdout.trim())
@@ -86,7 +87,7 @@ async function main() {
 	try {
 		await execSync(`ffmpeg -y -i "${videoPath}" -vn -c:a libvorbis "${workLocations.tempAudio}"`)
 	}
-	catch (e) {
+	catch {
 		console.log('No audio detected.')
 		audioFlag = false
 	}
