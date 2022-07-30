@@ -66,7 +66,7 @@ async function main() {
 	buildLocations()
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
-	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${delta}px${type.w.includes('Bounce') ? `and bounce speed of ${bouncesPerSecond} per second.` : ''}.\nExtracting necessary input file info...`);
+	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${delta}px${type.w.includes('Bounce') ? ` and bounce speed of ${bouncesPerSecond} per second.` : ''}.\nExtracting necessary input file info...`)
 	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`)
 	// Deconstructor extracts these values and renames them.
 	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate }] } = JSON.parse(videoInfo.stdout.trim())
