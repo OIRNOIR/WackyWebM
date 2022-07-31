@@ -18,5 +18,6 @@ You can also tweak the script to taste if you want to adjust how your file is ge
 
 * `Bounce` (Default): The video bounces up and down.
 * `Shutter`: The video bounces left to right.
-* `Bounce+Shutter`: The simultaneous effects of `Bounce` and `Shutter`, slightly offset from each other
+* `Bounce+Shutter`: The simultaneous effects of `Bounce` and `Shutter`, slightly offset from each other.
 * `Sporadic`: The video glitches and wobbles randomly.
+* `Grow`: The video starts small then grows in size.

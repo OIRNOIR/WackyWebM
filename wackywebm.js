@@ -12,7 +12,7 @@ const util = require('util')
 const execSync = util.promisify(require('child_process').exec)
 const getFileName = p => path.basename(p, path.extname(p))
 
-if (process.argv.length < 3 || process.argv.length > 4) return displayUsage()
+if (process.argv.length < 3 || process.argv.length > 4) displayUsage()
 
 // Process input arguments. Assume first argument is the desired output type, and if
 // it matches none, assume part of the rawVideoPath and unshift it back before joining.
@@ -34,6 +34,10 @@ switch (inputType.toLowerCase()) {
 	case 'bounce+shutter':
 		type.n = 3
 		type.w = 'Bounce_Shutter'
+		break
+	case 'grow':
+		type.n = 4
+		type.w = 'Grow'
 		break
 	default:
 		rawVideoPath.unshift(inputType)
@@ -61,7 +65,7 @@ function buildLocations() {
 }
 
 function displayUsage() {
-	console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic] <input_file>')
+	console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic, grow] <input_file>')
 }
 
 async function main() {
@@ -128,6 +132,9 @@ async function main() {
 				height = index === 0 ? maxHeight : (Math.floor(Math.abs(Math.cos(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxHeight - delta))) + delta)
 				width = index === 0 ? maxWidth : (Math.floor(Math.abs(Math.sin(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxWidth - delta))) + delta)
 				break
+			case 4:
+				height = index === 0 ? 50 : height + Math.floor(((maxHeight * 2) - 50) / (tempFramesFrames.length))
+				width = index === 0 ? 50 : width + Math.floor(((maxWidth * 2) - 50) / (tempFramesFrames.length))
 		}
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`)
