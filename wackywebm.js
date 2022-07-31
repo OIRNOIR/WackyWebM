@@ -35,6 +35,10 @@ switch (inputType.toLowerCase()) {
 		type.n = 3
 		type.w = 'Bounce_Shutter'
 		break
+	case 'shrink':
+		type.n = 4
+		type.w = 'Shrink'
+		break
 	default:
 		rawVideoPath.unshift(inputType)
 }
@@ -73,12 +77,13 @@ async function main() {
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
 	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${delta}px${type.w.includes('Bounce') ? ` and bounce speed of ${bouncesPerSecond} per second.` : ''}.\nExtracting necessary input file info...`)
-	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`)
+	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height,duration "${videoPath}"`)
 	// Deconstructor extracts these values and renames them.
-	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate }] } = JSON.parse(videoInfo.stdout.trim())
+	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate, duration: duration }] } = JSON.parse(videoInfo.stdout.trim())
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
+	duration = Number(duration) * decimalFramerate
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
 	console.log(`Resolution is ${maxWidth}x${maxHeight}.\nFramerate is ${framerate} (${decimalFramerate}).\nCreating temporary directories...`)
@@ -111,6 +116,9 @@ async function main() {
 		width = maxWidth,
 		height = maxHeight
 	process.stdout.write(`Converting frames to webm (File ${index}/${tempFramesFrames.length})...`)
+
+	const delH = maxHeight / duration
+	
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 		switch (type.n) {
@@ -127,6 +135,10 @@ async function main() {
 			case 3:
 				height = index === 0 ? maxHeight : (Math.floor(Math.abs(Math.cos(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxHeight - delta))) + delta)
 				width = index === 0 ? maxWidth : (Math.floor(Math.abs(Math.sin(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxWidth - delta))) + delta)
+				break
+			case 4:
+				height = Math.max(1, Math.floor(height - delH))
+				break
 		}
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`)
