@@ -127,6 +127,7 @@ async function main() {
 			case 3:
 				height = index === 0 ? maxHeight : (Math.floor(Math.abs(Math.cos(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxHeight - delta))) + delta)
 				width = index === 0 ? maxWidth : (Math.floor(Math.abs(Math.sin(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxWidth - delta))) + delta)
+				break
 		}
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`)
