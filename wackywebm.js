@@ -19,7 +19,7 @@ if (process.argv.length < 3 || process.argv.length > 4) displayUsage()
 // it matches none, assume part of the rawVideoPath and unshift it back before joining.
 const [inputType, ...rawVideoPath] = process.argv.slice(2),
 	type = { n: 0, w: 'Bounce' }
-let growMult = 2
+let growMult = 3
 switch (inputType.toLowerCase()) {
 	case 'bounce':
 		type.n = 0
