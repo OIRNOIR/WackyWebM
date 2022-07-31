@@ -9,6 +9,7 @@ const path = require('path')
 const fs = require('fs')
 // Synchronous execution via promisify. 
 const util = require('util')
+const { rawListeners } = require('process')
 const execSync = util.promisify(require('child_process').exec)
 const getFileName = p => path.basename(p, path.extname(p))
 
@@ -18,6 +19,7 @@ if (process.argv.length < 3 || process.argv.length > 4) displayUsage()
 // it matches none, assume part of the rawVideoPath and unshift it back before joining.
 const [inputType, ...rawVideoPath] = process.argv.slice(2),
 	type = { n: 0, w: 'Bounce' }
+let growMult = 2
 switch (inputType.toLowerCase()) {
 	case 'bounce':
 		type.n = 0
@@ -35,10 +37,10 @@ switch (inputType.toLowerCase()) {
 		type.n = 3
 		type.w = 'Bounce_Shutter'
 		break
-	case 'grow':
-		type.n = 4
-		type.w = 'Grow'
-		break
+    case 'grow':
+        type.n = 4
+        type.w = 'Grow'
+        break
 	default:
 		rawVideoPath.unshift(inputType)
 }
@@ -79,7 +81,7 @@ async function main() {
 	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${delta}px${type.w.includes('Bounce') ? ` and bounce speed of ${bouncesPerSecond} per second.` : ''}.\nExtracting necessary input file info...`)
 	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`)
 	// Deconstructor extracts these values and renames them.
-	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate }] } = JSON.parse(videoInfo.stdout.trim())
+	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate}] } = JSON.parse(videoInfo.stdout.trim())
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
@@ -114,8 +116,10 @@ async function main() {
 		lines = [],
 		width = maxWidth,
 		height = maxHeight
+
 	process.stdout.write(`Converting frames to webm (File ${index}/${tempFramesFrames.length})...`)
-	for (const { file } of tempFramesFrames) {
+
+    for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 		switch (type.n) {
 			case 0:
@@ -131,10 +135,11 @@ async function main() {
 			case 3:
 				height = index === 0 ? maxHeight : (Math.floor(Math.abs(Math.cos(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxHeight - delta))) + delta)
 				width = index === 0 ? maxWidth : (Math.floor(Math.abs(Math.sin(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxWidth - delta))) + delta)
-				break
-			case 4:
-				height = index === 0 ? 50 : height + Math.floor(((maxHeight * 2) - 50) / (tempFramesFrames.length))
-				width = index === 0 ? 50 : width + Math.floor(((maxWidth * 2) - 50) / (tempFramesFrames.length))
+                break
+            case 4:
+                height = index === 0 ? 50 : height + Math.floor(((maxHeight * growMult) - 50) / (tempFramesFrames.length))
+				width = index === 0 ? 50 : width + Math.floor(((maxWidth * growMult) - 50) / (tempFramesFrames.length))
+                break
 		}
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`)
