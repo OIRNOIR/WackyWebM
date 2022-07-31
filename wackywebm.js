@@ -12,6 +12,8 @@ const util = require('util')
 const execSync = util.promisify(require('child_process').exec)
 const getFileName = p => path.basename(p, path.extname(p))
 
+if (process.argv.length < 3 || process.argv.length > 4) return displayUsage()
+
 // Process input arguments. Assume first argument is the desired output type, and if
 // it matches none, assume part of the rawVideoPath and unshift it back before joining.
 const [inputType, ...rawVideoPath] = process.argv.slice(2),
@@ -58,9 +60,13 @@ function buildLocations() {
 	workLocations.outputFile = path.join(filePath, `${fileName}_${type.w}.webm`)
 }
 
+function displayUsage() {
+	console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic] <input_file>')
+}
+
 async function main() {
 	// Verify the given path is accessible.
-	if (!videoPath || !fs.existsSync(videoPath)) return console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic] <input_file>')
+	if (!videoPath || !fs.existsSync(videoPath)) return displayUsage()
 
 	// Only build the path if temporary location index if the code can move forward. Less to do.
 	buildLocations()
