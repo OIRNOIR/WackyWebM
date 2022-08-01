@@ -16,6 +16,8 @@ If you're having trouble installing the dependencies, or need help running the c
 
 If you're on windows, you can simply double-click `run.bat`, as long as it's in the same folder as `wackywebm.js`.
 
+If you're on MacOS or Linux, you can run `run.sh`. You may have to give it permission to execute with `chmod +x run.sh`.
+
 You can also tweak the script to taste if you want to adjust how your file is generated.
 
 ## Mode options
