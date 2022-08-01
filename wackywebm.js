@@ -17,11 +17,13 @@ const resolveNumber = (n) => (isNaN(Number(n)) ? Number.NEGATIVE_INFINITY : Numb
 
 const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter', 'Keyframes']
 
-const type = {w: undefined}
-let videoPath = "", outputPath = undefined, keyFrameFile = undefined;
+const type = { w: undefined }
+let videoPath = '',
+	outputPath = undefined,
+	keyFrameFile = undefined
 
 for (let i = 2; i < process.argv.length; i++) {
-	const arg = process.argv[i];
+	const arg = process.argv[i]
 
 	// named arguments
 	//
@@ -29,20 +31,20 @@ for (let i = 2; i < process.argv.length; i++) {
 	if (arg === '-o' || arg === '--output') {
 		// no argument after "-o" 			  || not the first "-o" argument
 		if (i === process.argv.length - 1 || outputPath !== undefined) {
-			return displayUsage();
+			return displayUsage()
 		}
 		// consume the next argument, so we dont iterate over it again
-		outputPath = process.argv[++i];
-		continue;
+		outputPath = process.argv[++i]
+		continue
 	}
 	// keyframe file
 	if (arg === '-k' || arg === '--keyframes') {
 		// no argument after "-k" 			  || not the first "-k" argument
 		if (i === process.argv.length - 1 || keyFrameFile !== undefined) {
-			return displayUsage();
+			return displayUsage()
 		}
-		keyFrameFile = process.argv[++i];
-		continue;
+		keyFrameFile = process.argv[++i]
+		continue
 	}
 
 	// positional arguments
@@ -50,37 +52,31 @@ for (let i = 2; i < process.argv.length; i++) {
 	// basically, first positional argument is inputType, second one
 	// (and every one after that) is video path, except when the first one doesn't
 	// match any of the input types, in which case its also part of the path.
-	if (type.w === undefined && modes.map(m => m.toLowerCase()).includes(arg.toLowerCase())) {
-		type.w = modes.find((m) => m.toLowerCase() === arg.toLowerCase()).replace(/\+/g, '_');
+	if (type.w === undefined && modes.map((m) => m.toLowerCase()).includes(arg.toLowerCase())) {
+		type.w = modes.find((m) => m.toLowerCase() === arg.toLowerCase()).replace(/\+/g, '_')
 	} else {
-		if (type.w === undefined)
-			type.w = 'Bounce';
-		videoPath += arg + " ";
+		if (type.w === undefined) type.w = 'Bounce'
+		videoPath += arg + ' '
 	}
 }
 
 // not a single positional argument; we need at least 1
-if (type.w === undefined)
-	return displayUsage();
+if (type.w === undefined) return displayUsage()
 
 // Keyframes mode selected without providing keyframe file
-if (type.w === 'Keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile)))
-	return displayUsage();
+if (type.w === 'Keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) return displayUsage()
 
 // got 1 positional argument, which was the mode to use - no file path!
-if (videoPath === "")
-	return displayUsage();
+if (videoPath === '') return displayUsage()
 
 // we always append 1 extra space, so remove the last one.
-videoPath = videoPath.substring(0, videoPath.length - 1);
+videoPath = videoPath.substring(0, videoPath.length - 1)
 
-const fileName = getFileName(videoPath), filePath = path.dirname(videoPath)
+const fileName = getFileName(videoPath),
+	filePath = path.dirname(videoPath)
 
 // no "-o" argument, use default path in the format "chungus_Bounce.webm"
-if (outputPath === undefined)
-	outputPath = path.join(filePath, `${fileName}_${type.w}.webm`);
-
-
+if (outputPath === undefined) outputPath = path.join(filePath, `${fileName}_${type.w}.webm`)
 
 // These could be arguments, as well. They could also be taken via user input with readline.
 const delta = 2,
@@ -103,47 +99,50 @@ function buildLocations() {
 
 function displayUsage() {
 	const Usage =
-		"WackyWebM by OIRNOIR#0032\n" +
-		"Usage: node wackywebm.js [-o output_file_path] [optional_type] [-k keyframe_file] <input_file>\n" +
-		"\t-o,--output: change output file path (needs the desired output path as an argument)\n" +
-		"\t-k,--keyframes: only required with the type set to \"Keyframes\", sets the path to the keyframe file\n\n" +
-		"Recognized Modes:\n" +
-		modes.map(m => `\t${m}`).join('\n').toLowerCase() + "\nIf no mode is specified, \"Bounce\" is used.";
+		'WackyWebM by OIRNOIR#0032\n' +
+		'Usage: node wackywebm.js [-o output_file_path] [optional_type] [-k keyframe_file] <input_file>\n' +
+		'\t-o,--output: change output file path (needs the desired output path as an argument)\n' +
+		'\t-k,--keyframes: only required with the type set to "Keyframes", sets the path to the keyframe file\n\n' +
+		'Recognized Modes:\n' +
+		modes
+			.map((m) => `\t${m}`)
+			.join('\n')
+			.toLowerCase() +
+		'\nIf no mode is specified, "Bounce" is used.'
 	console.log(Usage)
 }
 
-let keyFrames = [];
+let keyFrames = []
 async function parseKeyFrameFile(framerate, originalWidth, originalHeight) {
-	const content = (await fs.promises.readFile(keyFrameFile)).toString();
+	const content = (await fs.promises.readFile(keyFrameFile)).toString()
 	// CRLF is annoying.
-	const lines = content.split('\n').filter(s => s !== '');
-	let data = lines.map(l => l.replace(/\s/g, '').split(','));
-	data = data.map(line => {
-		let time = line[0].split(/[:.-]/);
+	const lines = content.split('\n').filter((s) => s !== '')
+	let data = lines.map((l) => l.replace(/\s/g, '').split(','))
+	data = data.map((line) => {
+		let time = line[0].split(/[:.-]/)
 		// if there's only 1 "section" to the time, treat it as seconds. if there are 2, treat it as seconds:frames
-		let parsedTime = Math.floor(parseInt(time[0]) * framerate) + (time.length === 1 ? 0 : parseInt(time[1]));
+		let parsedTime = Math.floor(parseInt(time[0]) * framerate) + (time.length === 1 ? 0 : parseInt(time[1]))
 
-		let width = parseInt(line[1]);
-		let height = parseInt(line[2]);
+		let width = parseInt(line[1])
+		let height = parseInt(line[2])
 
-		let interpolation = line[3];
+		let interpolation = line[3]
 
-		return {time: parsedTime, width, height, interpolation};
-	});
-	data = data.sort((a, b) => a.time - b.time);
+		return { time: parsedTime, width, height, interpolation }
+	})
+	data = data.sort((a, b) => a.time - b.time)
 	if (data[0].time !== 0) {
-		data = [{time: 0, width: originalWidth, height: originalHeight, interpolation: 'linear'}, ...data];
+		data = [{ time: 0, width: originalWidth, height: originalHeight, interpolation: 'linear' }, ...data]
 	}
-	keyFrames = data;
+	keyFrames = data
 }
 // various kinds of interpolation go here.
 function lerp(a, b, t) {
 	// convert the inputs to floats for accuracy, then convert the result back to an integer at the end
-	a = a + 0.0;
-	b = b + 0.0;
-	return Math.floor(a + t * (b - a));
+	a = a + 0.0
+	b = b + 0.0
+	return Math.floor(a + t * (b - a))
 }
-
 
 // Obtains a map of the audio levels in decibels from the input file.
 async function getAudioLevelMap() {
@@ -179,8 +178,8 @@ async function main() {
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
 
 	if (type.w === 'Keyframes') {
-		console.log(`Parsing Keyframe File ${keyFrameFile}`);
-		await parseKeyFrameFile(decimalFramerate, maxWidth, maxHeight);
+		console.log(`Parsing Keyframe File ${keyFrameFile}`)
+		await parseKeyFrameFile(decimalFramerate, maxWidth, maxHeight)
 	}
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
@@ -216,7 +215,7 @@ async function main() {
 		width = maxWidth,
 		height = maxHeight,
 		length = tempFramesFrames.length,
-		lastKf = 0;
+		lastKf = 0
 	if (type.w.includes('Audio')) {
 		type.audioMap = await getAudioLevelMap()
 		type.audioMapL = type.audioMap.length - 1
@@ -261,25 +260,26 @@ async function main() {
 				break
 			case 'Keyframes':
 				if (lastKf !== keyFrames.length - 1 && index >= keyFrames[lastKf + 1].time) {
-					lastKf++;
+					lastKf++
 				}
 				if (lastKf === keyFrames.length - 1) {
 					// no more keyframes after this; keep current size.
-					width = keyFrames[lastKf].width;
-					height = keyFrames[lastKf].height;
-					break;
+					width = keyFrames[lastKf].width
+					height = keyFrames[lastKf].height
+					break
 				}
 
+				// eslint-disable-next-line no-case-declarations
+				const t = (index - keyFrames[lastKf].time) / (keyFrames[lastKf + 1].time - keyFrames[lastKf].time)
 				// who doesnt love more switches :)
-				const t = (index - keyFrames[lastKf].time) / (keyFrames[lastKf + 1].time - keyFrames[lastKf].time);
 				switch (keyFrames[lastKf].interpolation.toLowerCase()) {
 					case 'linear':
-						width = lerp(keyFrames[lastKf].width, keyFrames[lastKf + 1].width, t);
-						height = lerp(keyFrames[lastKf].height, keyFrames[lastKf + 1].height, t);
-						break;
+						width = lerp(keyFrames[lastKf].width, keyFrames[lastKf + 1].width, t)
+						height = lerp(keyFrames[lastKf].height, keyFrames[lastKf + 1].height, t)
+						break
 				}
 
-				break;
+				break
 		}
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`)
