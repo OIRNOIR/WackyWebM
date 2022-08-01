@@ -35,6 +35,10 @@ switch (inputType.toLowerCase()) {
 		type.n = 3
 		type.w = 'Bounce_Shutter'
 		break
+	case 'shrink':
+		type.n = 4
+		type.w = 'Shrink'
+		break
 	default:
 		rawVideoPath.unshift(inputType)
 }
@@ -61,7 +65,7 @@ function buildLocations() {
 }
 
 function displayUsage() {
-	console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic] <input_file>')
+	console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic, shrink] <input_file>')
 }
 
 async function main() {
@@ -111,6 +115,7 @@ async function main() {
 		width = maxWidth,
 		height = maxHeight
 	process.stdout.write(`Converting frames to webm (File ${index}/${tempFramesFrames.length})...`)
+	
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 		switch (type.n) {
@@ -127,6 +132,9 @@ async function main() {
 			case 3:
 				height = index === 0 ? maxHeight : (Math.floor(Math.abs(Math.cos(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxHeight - delta))) + delta)
 				width = index === 0 ? maxWidth : (Math.floor(Math.abs(Math.sin(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxWidth - delta))) + delta)
+				break
+			case 4:
+				height = Math.max(1, Math.floor(maxHeight - ((index / tempFramesFrames.length) * maxHeight)));
 				break
 		}
 		// Creates the respective resized frame based on the above.
