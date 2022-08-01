@@ -65,7 +65,7 @@ function buildLocations() {
 }
 
 function displayUsage() {
-	console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic] <input_file>')
+	console.log('WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: bounce, shutter, bounce+shutter, sporadic, shrink] <input_file>')
 }
 
 async function main() {
@@ -77,13 +77,12 @@ async function main() {
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
 	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${delta}px${type.w.includes('Bounce') ? ` and bounce speed of ${bouncesPerSecond} per second.` : ''}.\nExtracting necessary input file info...`)
-	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height,duration "${videoPath}"`)
+	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`)
 	// Deconstructor extracts these values and renames them.
-	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate, duration: duration }] } = JSON.parse(videoInfo.stdout.trim())
+	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate }] } = JSON.parse(videoInfo.stdout.trim())
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
-	duration = Number(duration) * decimalFramerate
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
 	console.log(`Resolution is ${maxWidth}x${maxHeight}.\nFramerate is ${framerate} (${decimalFramerate}).\nCreating temporary directories...`)
@@ -116,8 +115,6 @@ async function main() {
 		width = maxWidth,
 		height = maxHeight
 	process.stdout.write(`Converting frames to webm (File ${index}/${tempFramesFrames.length})...`)
-
-	const delH = maxHeight / duration
 	
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
@@ -137,7 +134,7 @@ async function main() {
 				width = index === 0 ? maxWidth : (Math.floor(Math.abs(Math.sin(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxWidth - delta))) + delta)
 				break
 			case 4:
-				height = Math.max(1, Math.floor(height - delH))
+				height = Math.max(1, Math.floor(maxHeight - ((index / tempFramesFrames.length) * maxHeight)));
 				break
 		}
 		// Creates the respective resized frame based on the above.
