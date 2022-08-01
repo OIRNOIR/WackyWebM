@@ -136,6 +136,14 @@ async function parseKeyFrameFile(framerate, originalWidth, originalHeight) {
 	}
 	keyFrames = data;
 }
+// various kinds of interpolation go here.
+function lerp(a, b, t) {
+	// convert the inputs to floats for accuracy, then convert the result back to an integer at the end
+	a = a + 0.0;
+	b = b + 0.0;
+	return Math.floor(a + t * (b - a));
+}
+
 
 // Obtains a map of the audio levels in decibels from the input file.
 async function getAudioLevelMap() {
@@ -207,7 +215,8 @@ async function main() {
 		lines = [],
 		width = maxWidth,
 		height = maxHeight,
-		length = tempFramesFrames.length
+		length = tempFramesFrames.length,
+		lastKf = 0;
 	if (type.w.includes('Audio')) {
 		type.audioMap = await getAudioLevelMap()
 		type.audioMapL = type.audioMap.length - 1
@@ -250,6 +259,27 @@ async function main() {
 					width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				}
 				break
+			case 'Keyframes':
+				if (lastKf !== keyFrames.length - 1 && index >= keyFrames[lastKf + 1].time) {
+					lastKf++;
+				}
+				if (lastKf === keyFrames.length - 1) {
+					// no more keyframes after this; keep current size.
+					width = keyFrames[lastKf].width;
+					height = keyFrames[lastKf].height;
+					break;
+				}
+
+				// who doesnt love more switches :)
+				const t = (index - keyFrames[lastKf].time) / (keyFrames[lastKf + 1].time - keyFrames[lastKf].time);
+				switch (keyFrames[lastKf].interpolation.toLowerCase()) {
+					case 'linear':
+						width = lerp(keyFrames[lastKf].width, keyFrames[lastKf + 1].width, t);
+						height = lerp(keyFrames[lastKf].height, keyFrames[lastKf + 1].height, t);
+						break;
+				}
+
+				break;
 		}
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`)

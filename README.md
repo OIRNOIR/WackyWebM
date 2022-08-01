@@ -29,7 +29,7 @@ You can also tweak the script to taste if you want to adjust how your file is ge
 - `Audio-Shutter`: The video's horizontal width changes relative to the current audio level verses the highest within the video.
 - `Keyframes <path to csv file>`: The video's height and width change based on a number of keyframes outlined in the file given as an argument. The format is as follows:
   - Every line consists of 4 comma-seperated values: 
-    - first, the time in the video of the keyframe, in either of the formats `f`, `s.f` or `m:s.f`, where `f` is the frame count, `s` is the number of seconds, and `m` is the number of minutes (note that `s` can be above 60 and `f` can be above the number of frames per second)
+    - first, the time in the video of the keyframe; either one integer representing seconds, or two, seperated by any one of the characters `.`, `:` or `-`, where the first still represents seconds, and the second represents frames.
     - next, the width, then the height at that keyframe (in pixels)
-    - finally, the interpolation with which to advance towards the next keyframe (currently, `linear` and `quadratic` are supported.)
+    - finally, the interpolation with which to advance towards the next keyframe (currently, only `linear` is supported.)
   - If it isn't overwritten, an implicit keyframe at 0 frames into the video is added with linear interpolation and the video's original size.
