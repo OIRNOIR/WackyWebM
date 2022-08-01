@@ -7,10 +7,10 @@ By OIRNOIR#0032
 
 const path = require('path')
 const fs = require('fs')
-// Synchronous execution via promisify. 
+// Synchronous execution via promisify.
 const util = require('util')
 const execSync = util.promisify(require('child_process').exec)
-const getFileName = p => path.basename(p, path.extname(p))
+const getFileName = (p) => path.basename(p, path.extname(p))
 
 if (process.argv.length < 3 || process.argv.length > 4) return displayUsage()
 
@@ -75,7 +75,9 @@ async function main() {
 	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${delta}px${type.w.includes('Bounce') ? ` and bounce speed of ${bouncesPerSecond} per second.` : ''}.\nExtracting necessary input file info...`)
 	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`)
 	// Deconstructor extracts these values and renames them.
-	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate }] } = JSON.parse(videoInfo.stdout.trim())
+	let {
+		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate }],
+	} = JSON.parse(videoInfo.stdout.trim())
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
@@ -92,8 +94,7 @@ async function main() {
 	let audioFlag = true
 	try {
 		await execSync(`ffmpeg -y -i "${videoPath}" -vn -c:a libvorbis "${workLocations.tempAudio}"`)
-	}
-	catch {
+	} catch {
 		console.log('No audio detected.')
 		audioFlag = false
 	}
@@ -104,7 +105,10 @@ async function main() {
 
 	// Sorts with a map so extraction of information only happens once per entry.
 	const tempFramesFiles = fs.readdirSync(workLocations.tempFrames)
-	const tempFramesFrames = tempFramesFiles.filter(f => f.endsWith('png')).map(f => ({ file: f, n: Number(getFileName(f)) })).sort((a, b) => a.n - b.n)
+	const tempFramesFrames = tempFramesFiles
+		.filter((f) => f.endsWith('png'))
+		.map((f) => ({ file: f, n: Number(getFileName(f)) }))
+		.sort((a, b) => a.n - b.n)
 	// Index tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
 	let index = 0,
 		lines = [],
@@ -115,18 +119,18 @@ async function main() {
 		// Makes the height/width changes based on the selected type.
 		switch (type.n) {
 			case 0:
-				height = index === 0 ? maxHeight : (Math.floor(Math.abs(Math.cos(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxHeight - delta))) + delta)
+				height = index === 0 ? maxHeight : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
 				break
 			case 1:
-				width = index === 0 ? maxWidth : (Math.floor(Math.abs(Math.cos(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxWidth - delta))) + delta)
+				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
 				break
 			case 2:
-				width = index === 0 ? maxWidth : (Math.floor(Math.random() * (maxWidth - delta)) + delta)
-				height = index === 0 ? maxHeight : (Math.floor(Math.random() * (maxHeight - delta)) + delta)
+				width = index === 0 ? maxWidth : Math.floor(Math.random() * (maxWidth - delta)) + delta
+				height = index === 0 ? maxHeight : Math.floor(Math.random() * (maxHeight - delta)) + delta
 				break
 			case 3:
-				height = index === 0 ? maxHeight : (Math.floor(Math.abs(Math.cos(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxHeight - delta))) + delta)
-				width = index === 0 ? maxWidth : (Math.floor(Math.abs(Math.sin(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxWidth - delta))) + delta)
+				height = index === 0 ? maxHeight : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
+				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.sin((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
 				break
 		}
 		// Creates the respective resized frame based on the above.
@@ -161,7 +165,6 @@ async function main() {
 	// Recursive removal of temporary files via the main temporary folder.
 	console.log('Done!\nRemoving temporary files...')
 	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
-
 }
 
 void main()

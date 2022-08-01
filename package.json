@@ -1,28 +1,28 @@
 {
-  "name": "webm-maker-thing-idk",
-  "version": "1.0.0",
-  "description": "This is a simple tool to allow you to create WebM files with changing aspect ratios.",
-  "main": "wackywebm.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node .",
-    "fmt": "prettier --write '**/*.{md,css,js,json}'",
-    "fmt:check": "prettier --check '**/*.{md,css,js,json}'",
-    "lint": "eslint '**/*.js'",
-    "lint:fix": "eslint '**/*.js' --fix"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/OIRNOIR/WebM-Maker-Thing-Idk.git"
-  },
-  "author": "OIRNOIR",
-  "license": "GPL-3.0-or-later",
-  "bugs": {
-    "url": "https://github.com/OIRNOIR/WebM-Maker-Thing-Idk/issues"
-  },
-  "homepage": "https://github.com/OIRNOIR/WebM-Maker-Thing-Idk#readme",
-  "devDependencies": {
-    "eslint": "^8.20.0",
-    "prettier": "2.7.1"
-  }
+	"name": "webm-maker-thing-idk",
+	"version": "1.0.0",
+	"description": "This is a simple tool to allow you to create WebM files with changing aspect ratios.",
+	"main": "wackywebm.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "node .",
+		"fmt": "prettier --write '**/*.{md,css,js,json}'",
+		"fmt:check": "prettier --check '**/*.{md,css,js,json}'",
+		"lint": "eslint '**/*.js'",
+		"lint:fix": "eslint '**/*.js' --fix"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/OIRNOIR/WebM-Maker-Thing-Idk.git"
+	},
+	"author": "OIRNOIR",
+	"license": "GPL-3.0-or-later",
+	"bugs": {
+		"url": "https://github.com/OIRNOIR/WebM-Maker-Thing-Idk/issues"
+	},
+	"homepage": "https://github.com/OIRNOIR/WebM-Maker-Thing-Idk#readme",
+	"devDependencies": {
+		"eslint": "^8.20.0",
+		"prettier": "2.7.1"
+	}
 }
