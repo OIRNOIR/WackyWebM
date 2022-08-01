@@ -17,7 +17,7 @@ const resolveNumber = (n) => (isNaN(Number(n)) ? Number.NEGATIVE_INFINITY : Numb
 
 if (process.argv.length < 3 || process.argv.length > 4) return displayUsage()
 
-const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter']
+const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter', 'Jumpscare']
 
 // Process input arguments. Assume first argument is the desired output type, and if
 // it matches none, assume part of the rawVideoPath and unshift it back before joining.
@@ -35,7 +35,7 @@ const fileName = getFileName(videoPath),
 
 // These could be arguments, as well. They could also be taken via user input with readline.
 const delta = 2,
-	bouncesPerSecond = 1.9
+	bouncesPerSecond = 10
 
 // Build an index of temporary locations so they do not need to be repeatedly rebuilt.
 // All temporary files are within one parent folder for cleanliness and ease of removal.
@@ -163,7 +163,18 @@ async function main() {
 					width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				}
 				break
+			case 'Jumpscare':
+				{
+					height = Math.max(1, Math.floor(maxHeight - (index / (decimalFramerate / bouncesPerSecond)) * Math.PI))
+					width = Math.max(1, Math.floor(maxWidth - (index / (decimalFramerate / bouncesPerSecond)) * Math.PI))
+				}
+				break	
 		}
+		//Set the number after "index > " to the frame you want the effect to happen
+		if (index > 466) {
+			height = maxHeight;
+			width = maxWidth;
+					}
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`)
 		// Tracks the new file for concatenation later.
