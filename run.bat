@@ -17,7 +17,7 @@ set /p "mode=Mode: "
 set /p "file=File: "
 
 REM Run node commmand
-node wackywebm.js %mode% %file%
+node wackywebm.js %mode% "%file%"
 
 REM Wait for keyboard input
 pause
