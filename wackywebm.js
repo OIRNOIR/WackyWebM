@@ -81,7 +81,7 @@ async function main() {
 	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${delta}px${type.w.includes('Bounce') ? ` and bounce speed of ${bouncesPerSecond} per second.` : ''}.\nExtracting necessary input file info...`)
 	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`)
 	// Deconstructor extracts these values and renames them.
-	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate}] } = JSON.parse(videoInfo.stdout.trim())
+	let { streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate }] } = JSON.parse(videoInfo.stdout.trim())
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
@@ -118,8 +118,8 @@ async function main() {
 		height = maxHeight
 
 	process.stdout.write(`Converting frames to webm (File ${index}/${tempFramesFrames.length})...`)
-
-    for (const { file } of tempFramesFrames) {
+	
+	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 		switch (type.n) {
 			case 0:
