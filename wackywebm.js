@@ -22,7 +22,12 @@ const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Aud
 // Process input arguments. Assume first argument is the desired output type, and if
 // it matches none, assume part of the rawVideoPath and unshift it back before joining.
 const [inputType, ...rawVideoPath] = process.argv.slice(2),
-	type = { w: modes.find((m) => m.toLowerCase() == inputType.toLowerCase())?.replace(/\+/g, '_') ?? 'Bounce' }
+	type = { w: modes.find((m) => m.toLowerCase() == inputType.toLowerCase())?.replace(/\+/g, '_') }
+
+if (type.w == undefined) {
+	rawVideoPath.unshift(inputType)
+	type.w = 'Bounce' // Default type
+}
 
 const videoPath = rawVideoPath.join(' ').trim()
 const fileName = getFileName(videoPath),
