@@ -17,7 +17,7 @@ const resolveNumber = (n) => (isNaN(Number(n)) ? Number.NEGATIVE_INFINITY : Numb
 
 if (process.argv.length < 3 || process.argv.length > 4) return displayUsage()
 
-const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter']
+const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Both',]
 
 // Process input arguments. Assume first argument is the desired output type, and if
 // it matches none, assume part of the rawVideoPath and unshift it back before joining.
@@ -163,9 +163,23 @@ async function main() {
 					width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				}
 				break
+			case 'Audio-Both':
+				{
+					const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
+					height = Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
+					width = Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
+				}
+				break
 		}
 		// Creates the respective resized frame based on the above.
-		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+		// if it's the first frame, make it the same size as the original.
+
+		if(index === 0) {
+			await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${maxWidth}x${maxHeight} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+		} else {
+			await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+		}
+
 		// Tracks the new file for concatenation later.
 		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
 		index++
