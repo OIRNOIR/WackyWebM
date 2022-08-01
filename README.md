@@ -20,8 +20,8 @@ You can also tweak the script to taste if you want to adjust how your file is ge
 
 ## Mode options
 
-* `Bounce` (Default): The video bounces up and down.
-* `Shutter`: The video bounces left to right.
-* `Bounce+Shutter`: The simultaneous effects of `Bounce` and `Shutter`, slightly offset from each other.
-* `Sporadic`: The video glitches and wobbles randomly.
-* `Shrink`: The video shrinks vertically until it's just one pixel thin.
+- `Bounce` (Default): The video bounces up and down.
+- `Shutter`: The video bounces left to right.
+- `Bounce+Shutter`: The simultaneous effects of `Bounce` and `Shutter`, slightly offset from each other.
+- `Sporadic`: The video glitches and wobbles randomly.
+- `Shrink`: The video shrinks vertically until it's just one pixel thin.

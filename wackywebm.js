@@ -119,7 +119,7 @@ async function main() {
 		width = maxWidth,
 		height = maxHeight
 	process.stdout.write(`Converting frames to webm (File ${index}/${tempFramesFrames.length})...`)
-	
+
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 		switch (type.n) {
@@ -138,7 +138,7 @@ async function main() {
 				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.sin((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
 				break
 			case 4:
-				height = Math.max(1, Math.floor(maxHeight - ((index / tempFramesFrames.length) * maxHeight)));
+				height = Math.max(1, Math.floor(maxHeight - (index / tempFramesFrames.length) * maxHeight))
 				break
 		}
 		// Creates the respective resized frame based on the above.
