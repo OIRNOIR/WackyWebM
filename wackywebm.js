@@ -86,9 +86,9 @@ async function getAudioLevelMap() {
 	const intermediateMap = rawAudioData.map(({ tags: { "lavfi.astats.Overall.RMS_level": dBs } }, i) => ({ frame: Number(i + 1), dBs: resolveNumber(dBs) }))
 	// Obtain the highest audio level from the file.
 	const highest = intermediateMap.reduce((previous, current) => (previous.dBs > current.dBs ? previous : current))
-	//return map1.map(v => ({ percentMax: 1 - (highest.dBs / v.dBs), ...v })) // Shrink when louder.
+	//return intermediateMap.map(v => ({ percentMax: 1 - (highest.dBs / v.dBs), ...v })) // Shrink when louder.
 	// Amend percentages of the audio per frame vs. the highest in the file.
-	return map1.map(v => ({ percentMax: highest.dBs / v.dBs, ...v }))
+	return intermediateMap.map(v => ({ percentMax: highest.dBs / v.dBs, ...v }))
 }
 
 async function main() {
@@ -143,8 +143,8 @@ async function main() {
 		height = maxHeight,
 		length = tempFramesFrames.length
 	if (type.n === 99) {
-		type.map = await getAudioLevelMap()
-		type.mapN = type.map.length - 1
+		type.audioMap = await getAudioLevelMap()
+		type.audioMapL = type.audioMap.length - 1
 	}
 	process.stdout.write(`Converting frames to webm (File ${index}/${tempFramesFrames.length})...`)
 
@@ -171,7 +171,7 @@ async function main() {
 			case 99:
 				// Since audio frames don't match video frames, this calculates the percentage
 				// through the file a video frame is and grabs the closest audio frame's decibels.
-				const { percentMax } = type.map[Math.max(Math.min(Math.floor(index / (length - 1) * type.mapN), type.mapN), 0)]
+				const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor(index / (length - 1) * type.audioMapL), type.audioMapL), 0)]
 				height = index === 0 ? maxHeight : Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
 				//width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				break
