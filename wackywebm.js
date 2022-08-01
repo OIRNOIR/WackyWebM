@@ -187,8 +187,19 @@ function displayUsage() {
 	console.log(Usage)
 }
 
-function ffmpegErrorHandler(e) {
-	console.error(e.message.split('\n').filter(m => !m.startsWith('  configuration:')).join('\n'))
+// Obtains a map of the audio levels in decibels from the input file.
+async function getAudioLevelMap() {
+	// The method requires escaping the file path.
+	// Modify this regular expression if more are necessary.
+	const escapePathRegex = /([\\/:])/g
+	const { frames: rawAudioData } = JSON.parse((await execSync(`ffprobe -f lavfi -i "amovie='${videoPath.replace(escapePathRegex, '\\$1')}',astats=metadata=1:reset=1" -show_entries "frame=pkt_pts_time:frame_tags=lavfi.astats.Overall.RMS_level" -of json`)).stdout)
+	// Remap to simplify the format.
+	const intermediateMap = rawAudioData.map(({ tags: { "lavfi.astats.Overall.RMS_level": dBs } }, i) => ({ frame: Number(i + 1), dBs: resolveNumber(dBs) }))
+	// Obtain the highest audio level from the file.
+	const highest = intermediateMap.reduce((previous, current) => (previous.dBs > current.dBs ? previous : current))
+	//return intermediateMap.map(v => ({ percentMax: 1 - (highest.dBs / v.dBs), ...v })) // Shrink when louder.
+	// Amend percentages of the audio per frame vs. the highest in the file.
+	return intermediateMap.map(v => ({ percentMax: highest.dBs / v.dBs, ...v }))
 }
 
 async function main() {
@@ -266,24 +277,14 @@ Framerate is ${framerate} (${decimalFramerate}).`
 		.map((f) => ({ file: f, n: Number(getFileName(f)) }))
 		.sort((a, b) => a.n - b.n)
 	// Index tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
-	let frame = 0,
-		tempFiles = []
-
-	// type.w's first character is uppercase, make it lower
-	type.w = type.w.toLowerCase()
-	if (/\+/.test(type.w)) {
-		type.w = type.w.split(/\+/g)
-	} else {
-		type.w = [type.w]
-	}
-
-	const setupInfo = {
-		videoPath,
-		keyFrameFile,
-		maxWidth,
-		maxHeight,
-		frameCount,
-		frameRate: decimalFramerate,
+	let index = 0,
+		lines = [],
+		width = maxWidth,
+		height = maxHeight,
+		length = tempFramesFrames.length
+	if (type.n === 99) {
+		type.audioMap = await getAudioLevelMap()
+		type.audioMapL = type.audioMap.length - 1
 	}
 
 	// Setup modes
@@ -296,15 +297,31 @@ Framerate is ${framerate} (${decimalFramerate}).`
 	const subProcess = []
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
-
-		const infoObject = {
-			frame: frame,
-			maxWidth: maxWidth,
-			maxHeight: maxHeight,
-			frameCount: frameCount,
-			frameRate: decimalFramerate,
-			tempo: tempo,
-			angle: angle,
+		switch (type.n) {
+			case 0:
+				height = index === 0 ? maxHeight : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
+				break
+			case 1:
+				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
+				break
+			case 2:
+				width = index === 0 ? maxWidth : Math.floor(Math.random() * (maxWidth - delta)) + delta
+				height = index === 0 ? maxHeight : Math.floor(Math.random() * (maxHeight - delta)) + delta
+				break
+			case 3:
+				height = index === 0 ? maxHeight : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
+				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.sin((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
+				break
+			case 4:
+				height = Math.max(1, Math.floor(maxHeight - (index / tempFramesFrames.length) * maxHeight))
+				break
+			case 99:
+				// Since audio frames don't match video frames, this calculates the percentage
+				// through the file a video frame is and grabs the closest audio frame's decibels.
+				const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor(index / (length - 1) * type.audioMapL), type.audioMapL), 0)]
+				height = index === 0 ? maxHeight : Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
+				//width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
+				break
 		}
 
 		const frameBounds = {}
