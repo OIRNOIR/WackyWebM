@@ -137,8 +137,8 @@ async function main() {
 				width = index === 0 ? maxWidth : (Math.floor(Math.abs(Math.sin(index / (decimalFramerate / bouncesPerSecond) * Math.PI) * (maxWidth - delta))) + delta)
                 break
             case 4:
-                height = index === 0 ? 50 : height + Math.floor(((maxHeight * growMult) - 50) / (tempFramesFrames.length))
-				width = index === 0 ? 50 : width + Math.floor(((maxWidth * growMult) - 50) / (tempFramesFrames.length))
+                height = index === 0 ? 50 : height + Math.floor(((maxHeight * growMult) + 50) / (tempFramesFrames.length))
+				width = index === 0 ? 50 : width + Math.floor(((maxWidth * growMult) + 50) / (tempFramesFrames.length))
                 break
 		}
 		// Creates the respective resized frame based on the above.

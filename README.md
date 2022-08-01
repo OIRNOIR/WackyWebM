@@ -20,4 +20,5 @@ You can also tweak the script to taste if you want to adjust how your file is ge
 * `Shutter`: The video bounces left to right.
 * `Bounce+Shutter`: The simultaneous effects of `Bounce` and `Shutter`, slightly offset from each other.
 * `Sporadic`: The video glitches and wobbles randomly.
-* `Grow`: The video starts small then grows in size.
+* `Grow`: The video starts small then grows in size. The `growMult` variable should be changed depending on the size of the video. For large
+videos, it should only be 1.5 - 2. For smaller videos, it can be 3 - 4.
