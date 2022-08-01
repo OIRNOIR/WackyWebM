@@ -112,6 +112,31 @@ function displayUsage() {
 	console.log(Usage)
 }
 
+let keyFrames = [];
+async function parseKeyFrameFile(framerate, originalWidth, originalHeight) {
+	const content = (await fs.promises.readFile(keyFrameFile)).toString();
+	// CRLF is annoying.
+	const lines = content.split('\n').filter(s => s !== '');
+	let data = lines.map(l => l.replace(/\s/g, '').split(','));
+	data = data.map(line => {
+		let time = line[0].split(/[:.-]/);
+		// if there's only 1 "section" to the time, treat it as seconds. if there are 2, treat it as seconds:frames
+		let parsedTime = Math.floor(parseInt(time[0]) * framerate) + (time.length === 1 ? 0 : parseInt(time[1]));
+
+		let width = parseInt(line[1]);
+		let height = parseInt(line[2]);
+
+		let interpolation = line[3];
+
+		return {time: parsedTime, width, height, interpolation};
+	});
+	data = data.sort((a, b) => a.time - b.time);
+	if (data[0].time !== 0) {
+		data = [{time: 0, width: originalWidth, height: originalHeight, interpolation: 'linear'}, ...data];
+	}
+	keyFrames = data;
+}
+
 // Obtains a map of the audio levels in decibels from the input file.
 async function getAudioLevelMap() {
 	// The method requires escaping the file path.
@@ -144,6 +169,11 @@ async function main() {
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
+
+	if (type.w === 'Keyframes') {
+		console.log(`Parsing Keyframe File ${keyFrameFile}`);
+		await parseKeyFrameFile(decimalFramerate, maxWidth, maxHeight);
+	}
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
 	console.log(`Resolution is ${maxWidth}x${maxHeight}.\nFramerate is ${framerate} (${decimalFramerate}).\nCreating temporary directories...`)
