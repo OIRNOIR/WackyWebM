@@ -25,4 +25,5 @@ You can also tweak the script to taste if you want to adjust how your file is ge
 - `Bounce+Shutter`: The simultaneous effects of `Bounce` and `Shutter`, slightly offset from each other.
 - `Sporadic`: The video glitches and wobbles randomly.
 - `Shrink`: The video shrinks vertically until it's just one pixel thin.
-- `Audiophile`: The video's vertical height changes relative to the current audio level verses the highest within the video.
+- `Audio-Bounce`: The video's vertical height changes relative to the current audio level verses the highest within the video.
+- `Audio-Shutter`: The video's horizontal width changes relative to the current audio level verses the highest within the video.
