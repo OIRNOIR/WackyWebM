@@ -22,3 +22,4 @@ You can also tweak the script to taste if you want to adjust how your file is ge
 * `Shutter`: The video bounces left to right.
 * `Bounce+Shutter`: The simultaneous effects of `Bounce` and `Shutter`, slightly offset from each other.
 * `Sporadic`: The video glitches and wobbles randomly.
+* `Shrink`: The video shrinks vertically until it's just one line.
