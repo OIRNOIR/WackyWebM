@@ -25,8 +25,7 @@ let videoPath = '',
 	outputPath = undefined,
 	keyFrameFile = undefined,
 	bitrate = undefined,
-	tempo = undefined,
-	compression = undefined;
+	tempo = undefined
 
 for (let i = 2; i < process.argv.length; i++) {
 	const arg = process.argv[i]
@@ -70,14 +69,6 @@ for (let i = 2; i < process.argv.length; i++) {
 		tempo = process.argv[++i]
 		continue
 	}
-	// level of compression
-	if (arg === '-c' || arg === '--compression') {
-		if (i === process.argv.length - 1 || compression !== undefined) {
-			return displayUsage()
-		}
-		compression = parseInt(process.argv[++i]);
-		continue
-	}
 
 	// positional arguments
 	//
@@ -115,7 +106,6 @@ videoPath = videoPath.substring(0, videoPath.length - 1)
 // Default bitrate: 1M
 if (bitrate === undefined) bitrate = '1M'
 if (tempo === undefined) tempo = 2
-if (compression === undefined) compression = 0;
 
 const fileName = getFileName(videoPath),
 	filePath = path.dirname(videoPath)
@@ -143,7 +133,6 @@ function displayUsage() {
 	const Usage =
 		'WackyWebM by OIRNOIR#0032\n' +
 		'Usage: node wackywebm.js [-o output_file_path] [optional_type] [-k keyframe_file] <input_file>\n' +
-		'\t-c,--compression: change compression level (higher is more compressed, 0 is lossless)\n' +
 		'\t-o,--output: change output file path (needs the desired output path as an argument)\n' +
 		'\t-k,--keyframes: only required with the type set to "Keyframes", sets the path to the keyframe file\n' +
 		'\t-b,--bitrate: change the bitrate used to encode the file (Default is 1 MB/s)\n' +
@@ -228,8 +217,6 @@ async function main() {
 
 	process.stdout.write(`Converting frames to webm (File ${index}/${tempFramesFrames.length})...`)
 
-	let lastWidth = -1, lastHeight = -1, sameSizeCount = 0;
-
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 
@@ -252,25 +239,11 @@ async function main() {
 		if (frameBounds.width === undefined) frameBounds.width = maxWidth
 		if (frameBounds.height === undefined) frameBounds.height = maxHeight
 
-		// bit hacky but whatever...
-		if (index === 0)
-		{
-			lastWidth = frameBounds.width;
-			lastHeight = frameBounds.height;
-		}
-
-		// we "save" either when the difference in frame size is too large (as defined by the compression parameter), or when we reached the end of the video.
-		if (Math.abs(frameBounds.width - lastWidth) + Math.abs(frameBounds.height - lastHeight) > compression || index === length - 1) {
-			await execSync(`ffmpeg -y -start_number ${index - sameSizeCount + 1} -i "${path.join(workLocations.tempFrames, "%d.png")}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${lastWidth}x${lastHeight} -aspect ${frameBounds.width}:${frameBounds.height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
-			lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
-			sameSizeCount = 1;
-			lastWidth = frameBounds.width;
-			lastHeight = frameBounds.height;
-		}else {
-			sameSizeCount++;
-		}
+		// Creates the respective resized frame based on the above.
+		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 
 		// Tracks the new file for concatenation later.
+		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
 		index++
 		process.stdout.clearLine()
 		process.stdout.cursorTo(0)
