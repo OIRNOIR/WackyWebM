@@ -64,7 +64,7 @@ for (let i = 2; i < process.argv.length; i++) {
 	// (and every one after that) is video path, except when the first one doesn't
 	// match any of the input types, in which case its also part of the path.
 	if (type.w === undefined && modes.map((m) => m.toLowerCase()).includes(arg.toLowerCase())) {
-		type.w = modes.find((m) => m.toLowerCase() === arg.toLowerCase()).replace(/\+/g, '_')
+		type.w = modes.find((m) => m.toLowerCase() === arg.toLowerCase())
 	} else {
 		if (type.w === undefined) type.w = 'Bounce'
 		videoPath += arg + ' '
@@ -385,7 +385,7 @@ async function main() {
 				break
 		}
 		// If it's the first frame, make it the same size as the original, except for Keyframes mode, where the user has control.
-		if (index === 0 && type.w != 'Keyframes') {
+		if (index === 0 && type.w !== 'Keyframes') {
 			width = maxWidth
 			height = maxHeight
 		}
