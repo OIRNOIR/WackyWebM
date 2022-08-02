@@ -15,9 +15,9 @@ const getFileName = (p) => path.basename(p, path.extname(p))
 // this will make it Javascript's negative infinity.
 const resolveNumber = (n) => (isNaN(Number(n)) ? Number.NEGATIVE_INFINITY : Number(n))
 
-if (process.argv.length < 3 || process.argv.length > 4) return displayUsage()
-
 const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter']
+
+if (process.argv.length < 3 || process.argv.length > 4) return displayUsage()
 
 // Process input arguments. Assume first argument is the desired output type, and if
 // it matches none, assume part of the rawVideoPath and unshift it back before joining.
