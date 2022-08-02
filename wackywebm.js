@@ -25,7 +25,8 @@ let videoPath = '',
 	outputPath = undefined,
 	keyFrameFile = undefined,
 	bitrate = undefined,
-	tempo = undefined
+	tempo = undefined,
+	compression = undefined;
 
 for (let i = 2; i < process.argv.length; i++) {
 	const arg = process.argv[i]
@@ -69,6 +70,14 @@ for (let i = 2; i < process.argv.length; i++) {
 		tempo = process.argv[++i]
 		continue
 	}
+	// level of compression
+	if (arg === '-c' || arg === '--compression') {
+		if (i === process.argv.length - 1 || compression !== undefined) {
+			return displayUsage()
+		}
+		compression = parseInt(process.argv[++i]);
+		continue
+	}
 
 	// positional arguments
 	//
@@ -106,6 +115,7 @@ videoPath = videoPath.substring(0, videoPath.length - 1)
 // Default bitrate: 1M
 if (bitrate === undefined) bitrate = '1M'
 if (tempo === undefined) tempo = 2
+if (compression === undefined) compression = 0;
 
 const fileName = getFileName(videoPath),
 	filePath = path.dirname(videoPath)
@@ -242,17 +252,23 @@ async function main() {
 		if (frameBounds.width === undefined) frameBounds.width = maxWidth
 		if (frameBounds.height === undefined) frameBounds.height = maxHeight
 
-		// Creates the respective resized frame based on the above.
-		if (index !== 0 && (frameBounds.width !== lastWidth || frameBounds.height !== lastHeight)) {
+		// bit hacky but whatever...
+		if (index === 0)
+		{
+			lastWidth = frameBounds.width;
+			lastHeight = frameBounds.height;
+		}
+
+		// we "save" either when the difference in frame size is too large (as defined by the compression parameter), or when we reached the end of the video.
+		if (Math.abs(frameBounds.width - lastWidth) + Math.abs(frameBounds.height - lastHeight) > compression || index === length - 1) {
 			await execSync(`ffmpeg -y -start_number ${index - sameSizeCount + 1} -i "${path.join(workLocations.tempFrames, "%d.png")}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${lastWidth}x${lastHeight} -aspect ${frameBounds.width}:${frameBounds.height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 			lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
 			sameSizeCount = 1;
+			lastWidth = frameBounds.width;
+			lastHeight = frameBounds.height;
 		}else {
 			sameSizeCount++;
 		}
-
-		lastWidth = frameBounds.width;
-		lastHeight = frameBounds.height;
 
 		// Tracks the new file for concatenation later.
 		index++
