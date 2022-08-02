@@ -1,9 +1,8 @@
 // please only put things here that will be used by *multiple* modes, so as not to clutter the file too much.
 
-// These could be arguments, as well. They could also be taken via user input with readline.
 const util = require('util')
-const delta = 2,
-	bouncesPerSecond = 1.9
+// These could be arguments, as well. They could also be taken via user input with readline.
+const delta = 1
 
 // In case audio level readouts throw an "-inf"
 // this will make it Javascript's negative infinity.
@@ -26,4 +25,4 @@ async function getAudioLevelMap(videoPath) {
 	return intermediateMap.map((v) => ({ percentMax: highest.dBs / v.dBs, ...v }))
 }
 
-module.exports = { delta, bouncesPerSecond, getAudioLevelMap }
+module.exports = { delta, getAudioLevelMap }

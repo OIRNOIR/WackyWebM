@@ -32,7 +32,6 @@ You can also change the bitrate of the output file by tweaking `-b` (Default is 
 
 - `Bounce` (Default): The video bounces up and down.
 - `Shutter`: The video bounces left to right.
-- `Bounce+Shutter`: The simultaneous effects of `Bounce` and `Shutter`, slightly offset from each other.
 - `Sporadic`: The video glitches and wobbles randomly.
 - `Shrink`: The video shrinks vertically until it's just one pixel thin.
 - `Audio-Bounce`: The video's vertical height changes relative to the current audio level verses the highest within the video.

@@ -29,7 +29,8 @@ const type = { w: undefined }
 let videoPath = '',
 	outputPath = undefined,
 	keyFrameFile = undefined,
-	bitrate = undefined
+	bitrate = undefined,
+	tempo = undefined
 
 for (let i = 2; i < process.argv.length; i++) {
 	const arg = process.argv[i]
@@ -62,6 +63,15 @@ for (let i = 2; i < process.argv.length; i++) {
 			return displayUsage()
 		}
 		bitrate = process.argv[++i]
+		continue
+	}
+	// customizable bouncesPerSecond (hereinafter known as Tempo)
+	if (arg === '-t' || arg === '--tempo') {
+		// no argument after "-t" 			  || not the first "-t" argument
+		if (i === process.argv.length - 1 || tempo !== undefined) {
+			return displayUsage()
+		}
+		tempo = process.argv[++i]
 		continue
 	}
 
@@ -100,6 +110,7 @@ videoPath = videoPath.substring(0, videoPath.length - 1)
 
 // Default bitrate: 1M
 if (bitrate === undefined) bitrate = '1M'
+if (tempo === undefined) tempo = 2
 
 const fileName = getFileName(videoPath),
 	filePath = path.dirname(videoPath)
@@ -128,8 +139,9 @@ function displayUsage() {
 		'WackyWebM by OIRNOIR#0032\n' +
 		'Usage: node wackywebm.js [-o output_file_path] [optional_type] [-k keyframe_file] <input_file>\n' +
 		'\t-o,--output: change output file path (needs the desired output path as an argument)\n' +
-		'\t-k,--keyframes: only required with the type set to "Keyframes", sets the path to the keyframe file\n\n' +
-		'\t-b,--bitrate: change the bitrate used to encode the file (Default is 1 MB/s)' +
+		'\t-k,--keyframes: only required with the type set to "Keyframes", sets the path to the keyframe file\n' +
+		'\t-b,--bitrate: change the bitrate used to encode the file (Default is 1 MB/s)\n' +
+		'\t-t,--tempo: change the bounces per second on "Bounce" and "Shutter" modes\n\n' +
 		'Recognized Modes:\n' +
 		modes
 			.map((m) => `\t${m}`)
@@ -147,7 +159,7 @@ async function main() {
 	buildLocations()
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
-	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${ourUtil.delta}px${type.w.includes('Bounce') || type.w.includes('Shutter') ? ` and bounce speed of ${ourUtil.bouncesPerSecond} per second.` : ''}.\nExtracting necessary input file info...`)
+	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${ourUtil.delta}px${type.w.includes('Bounce') || type.w.includes('Shutter') ? ` and bounce speed of ${tempo} per second.` : ''}.\nExtracting necessary input file info...`)
 	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	// Deconstructor extracts these values and renames them.
 	let {
@@ -219,6 +231,7 @@ async function main() {
 			maxHeight: maxHeight,
 			frameCount: length,
 			frameRate: decimalFramerate,
+			tempo: tempo
 		}
 
 		const frameBounds = {}
