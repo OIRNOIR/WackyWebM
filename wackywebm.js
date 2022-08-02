@@ -322,18 +322,18 @@ async function main() {
 		// Makes the height/width changes based on the selected type.
 		switch (type.w) {
 			case 'Bounce':
-				height = index === 0 ? maxHeight : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
+				height = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
 				break
 			case 'Shutter':
-				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
+				width = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
 				break
 			case 'Sporadic':
-				width = index === 0 ? maxWidth : Math.floor(Math.random() * (maxWidth - delta)) + delta
-				height = index === 0 ? maxHeight : Math.floor(Math.random() * (maxHeight - delta)) + delta
+				width = Math.floor(Math.random() * (maxWidth - delta)) + delta
+				height = Math.floor(Math.random() * (maxHeight - delta)) + delta
 				break
 			case 'Bounce+Shutter':
-				height = index === 0 ? maxHeight : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
-				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.sin((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
+				height = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
+				width = Math.floor(Math.abs(Math.sin((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
 				break
 			case 'Shrink':
 				height = Math.max(1, Math.floor(maxHeight - (index / tempFramesFrames.length) * maxHeight))
@@ -344,14 +344,14 @@ async function main() {
 					// Since audio frames don't match video frames, this calculates the percentage
 					// through the file a video frame is and grabs the closest audio frame's decibels.
 					const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
-					height = index === 0 ? maxHeight : Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
-					//width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
+					height = Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
+					//width = Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				}
 				break
 			case 'Audio-Shutter':
 				{
 					const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
-					width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
+					width = Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				}
 				break
 			case 'Audio-Both':
@@ -361,7 +361,7 @@ async function main() {
 					width = Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				}
 				break
-      case 'Keyframes':
+			case 'Keyframes':
 				if (lastKf !== keyFrames.length - 1 && index >= keyFrames[lastKf + 1].time) {
 					lastKf++
 				}
@@ -384,12 +384,12 @@ async function main() {
 
 				break
 		}
-    // If it's the first frame, make it the same size as the original.
-    if (index === 0) {
-      width = maxWidth;
-      height = maxHeight;
-    }
-    
+		// If it's the first frame, make it the same size as the original, except for Keyframes mode, where the user has control.
+		if (index === 0 && type.w != 'Keyframes') {
+			width = maxWidth
+			height = maxHeight
+		}
+
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 		// Tracks the new file for concatenation later.
