@@ -21,7 +21,8 @@ module.exports = { modes }
 const type = { w: undefined }
 let videoPath = '',
 	outputPath = undefined,
-	keyFrameFile = undefined
+	keyFrameFile = undefined,
+	bitrate = undefined
 
 for (let i = 2; i < process.argv.length; i++) {
 	const arg = process.argv[i]
@@ -45,6 +46,15 @@ for (let i = 2; i < process.argv.length; i++) {
 			return displayUsage()
 		}
 		keyFrameFile = process.argv[++i]
+		continue
+	}
+	// customizable bitrate
+	if (arg === '-b' || arg === '--bitrate') {
+		// no argument after "-b" 			  || not the first "-b" argument
+		if (i === process.argv.length - 1 || bitrate !== undefined) {
+			return displayUsage()
+		}
+		bitrate = process.argv[++i]
 		continue
 	}
 
@@ -72,6 +82,9 @@ if (videoPath === '') return displayUsage()
 
 // we always append 1 extra space, so remove the last one.
 videoPath = videoPath.substring(0, videoPath.length - 1)
+
+// Default bitrate: 1M
+if (bitrate == undefined) bitrate = '1M'
 
 const fileName = getFileName(videoPath),
 	filePath = path.dirname(videoPath)
@@ -104,6 +117,7 @@ function displayUsage() {
 		'Usage: node wackywebm.js [-o output_file_path] [optional_type] [-k keyframe_file] <input_file>\n' +
 		'\t-o,--output: change output file path (needs the desired output path as an argument)\n' +
 		'\t-k,--keyframes: only required with the type set to "Keyframes", sets the path to the keyframe file\n\n' +
+		'\t-b,--bitrate: change the bitrate used to encode the file (Default is 1 MB/s)' +
 		'Recognized Modes:\n' +
 		modes
 			.map((m) => `\t${m}`)
@@ -283,7 +297,7 @@ async function main() {
 				break
 		}
 		// Creates the respective resized frame based on the above.
-		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 		// Tracks the new file for concatenation later.
 		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
 		index++
