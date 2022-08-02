@@ -25,6 +25,8 @@ If you're on MacOS or Linux, you can run `run.sh`. You may have to give it permi
 
 You can also tweak the script to taste if you want to adjust how your file is generated.
 
+You can also change the bitrate of the output file by tweaking `-b` (Default is 1M, which means 1 MB/s. If the file is too large, consider lowering this value.)
+
 ## Mode options
 
 - `Bounce` (Default): The video bounces up and down.

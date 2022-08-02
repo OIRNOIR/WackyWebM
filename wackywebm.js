@@ -16,11 +16,13 @@ const getFileName = (p) => path.basename(p, path.extname(p))
 const resolveNumber = (n) => (isNaN(Number(n)) ? Number.NEGATIVE_INFINITY : Number(n))
 
 const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter', 'Keyframes']
+module.exports = { modes }
 
 const type = { w: undefined }
 let videoPath = '',
 	outputPath = undefined,
-	keyFrameFile = undefined
+	keyFrameFile = undefined,
+	bitrate = undefined
 
 for (let i = 2; i < process.argv.length; i++) {
 	const arg = process.argv[i]
@@ -44,6 +46,15 @@ for (let i = 2; i < process.argv.length; i++) {
 			return displayUsage()
 		}
 		keyFrameFile = process.argv[++i]
+		continue
+	}
+	// customizable bitrate
+	if (arg === '-b' || arg === '--bitrate') {
+		// no argument after "-b" 			  || not the first "-b" argument
+		if (i === process.argv.length - 1 || bitrate !== undefined) {
+			return displayUsage()
+		}
+		bitrate = process.argv[++i]
 		continue
 	}
 
@@ -71,6 +82,9 @@ if (videoPath === '') return displayUsage()
 
 // we always append 1 extra space, so remove the last one.
 videoPath = videoPath.substring(0, videoPath.length - 1)
+
+// Default bitrate: 1M
+if (bitrate == undefined) bitrate = '1M'
 
 const fileName = getFileName(videoPath),
 	filePath = path.dirname(videoPath)
@@ -103,6 +117,7 @@ function displayUsage() {
 		'Usage: node wackywebm.js [-o output_file_path] [optional_type] [-k keyframe_file] <input_file>\n' +
 		'\t-o,--output: change output file path (needs the desired output path as an argument)\n' +
 		'\t-k,--keyframes: only required with the type set to "Keyframes", sets the path to the keyframe file\n\n' +
+		'\t-b,--bitrate: change the bitrate used to encode the file (Default is 1 MB/s)' +
 		'Recognized Modes:\n' +
 		modes
 			.map((m) => `\t${m}`)
@@ -237,7 +252,7 @@ async function getAudioLevelMap() {
 	// The method requires escaping the file path.
 	// Modify this regular expression if more are necessary.
 	const escapePathRegex = /([\\/:])/g
-	const { frames: rawAudioData } = JSON.parse((await execSync(`ffprobe -f lavfi -i "amovie='${videoPath.replace(escapePathRegex, '\\$1')}',astats=metadata=1:reset=1" -show_entries "frame=pkt_pts_time:frame_tags=lavfi.astats.Overall.RMS_level" -of json`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})).stdout)
+	const { frames: rawAudioData } = JSON.parse((await execSync(`ffprobe -f lavfi -i "amovie='${videoPath.replace(escapePathRegex, '\\$1')}',astats=metadata=1:reset=1" -show_entries "frame=pkt_pts_time:frame_tags=lavfi.astats.Overall.RMS_level" -of json`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })).stdout)
 	// Remap to simplify the format.
 	const intermediateMap = rawAudioData.map(({ tags: { 'lavfi.astats.Overall.RMS_level': dBs } }, i) => ({ frame: Number(i + 1), dBs: resolveNumber(dBs) }))
 	// Obtain the highest audio level from the file.
@@ -256,7 +271,7 @@ async function main() {
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
 	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${delta}px${type.w.includes('Bounce') || type.w.includes('Shutter') ? ` and bounce speed of ${bouncesPerSecond} per second.` : ''}.\nExtracting necessary input file info...`)
-	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	// Deconstructor extracts these values and renames them.
 	let {
 		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate }],
@@ -281,7 +296,7 @@ async function main() {
 	// If the file has no audio, flag it to it is not attempted.
 	let audioFlag = true
 	try {
-		await execSync(`ffmpeg -y -i "${videoPath}" -vn -c:a libvorbis "${workLocations.tempAudio}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+		await execSync(`ffmpeg -y -i "${videoPath}" -vn -c:a libvorbis "${workLocations.tempAudio}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch {
 		console.log('No audio detected.')
 		audioFlag = false
@@ -289,7 +304,7 @@ async function main() {
 
 	// Extracts the frames to be modified for the wackiness.
 	console.log('Splitting file into frames...')
-	await execSync(`ffmpeg -y -i "${videoPath}" "${workLocations.tempFrameFiles}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+	await execSync(`ffmpeg -y -i "${videoPath}" "${workLocations.tempFrameFiles}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 
 	// Sorts with a map so extraction of information only happens once per entry.
 	const tempFramesFiles = fs.readdirSync(workLocations.tempFrames)
@@ -370,7 +385,7 @@ async function main() {
 				break
 		}
 		// Creates the respective resized frame based on the above.
-		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 		// Tracks the new file for concatenation later.
 		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
 		index++
@@ -396,7 +411,7 @@ async function main() {
 	console.log(`Concatenating segments${audioFlag ? ' and applying audio ' : ' '}for final webm file...`)
 	//if(audioFlag) await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -i "${workLocations.tempAudio}" -c copy "${workLocations.outputFile}"`)
 	//else await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -c copy "${workLocations.outputFile}"`)
-	await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}"${audioFlag ? ` -i "${workLocations.tempAudio}" ` : ' '}-c copy "${workLocations.outputFile}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+	await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}"${audioFlag ? ` -i "${workLocations.tempAudio}" ` : ' '}-c copy "${workLocations.outputFile}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 
 	// Recursive removal of temporary files via the main temporary folder.
 	console.log('Done!\nRemoving temporary files...')
