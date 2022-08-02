@@ -16,3 +16,10 @@ jobs:
           node-version: 16
       - name: "Run script"
         run: node .github/format.js
+      - name: "Commit changes"
+        uses: devops-infra/action-commit-push@master
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          add_timestamp: true
+          commit_message: "Update scripts with modes from the file"
+          force: false
