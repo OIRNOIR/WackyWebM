@@ -4,6 +4,11 @@ This is a simple tool to allow you to create WebM files with changing aspect rat
 
 If you're having trouble installing the dependencies, or need help running the code, [this tutorial](https://www.youtube.com/watch?v=ZjGMjv1Gv94) is super helpful.
 
+### We have a Discord community!
+Share code, share modifications, learn from the community.
+
+[![Discord Invite Widget](https://invidget.switchblade.xyz/EdrqJ6AMKF)](https://discord.gg/EdrqJ6AMKF)
+
 ## Dependencies
 
 - NodeJS
