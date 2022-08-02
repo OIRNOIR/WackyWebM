@@ -44,7 +44,7 @@ Additionally, you may also change the bitrate of the output file by tweaking `-b
     - next, the width, then the height at that keyframe (in pixels)
     - finally, the interpolation with which to advance towards the next keyframe (currently, only `linear` is supported.)
   - If it isn't overwritten, an implicit keyframe at 0 frames into the video is added with linear interpolation and the video's original size.
-	- To use this mode, add `-k` with the path to your csv file.
+  - To use this mode, add `-k` with the path to your csv file.
 - `Jumpscare`: The video shrinks down small, then gets big at the specified frame.
 
 Additionally, any 2 modes can be combined using a `+` symbol, like `Bounce+Shutter`. If one only specifies width, and one only specifies height, then those respective values are used. If there is a conflict, the value from the latter of the 2 modes is used (so `Shrink+Bounce` would result in the same effect as just `Bounce`)
