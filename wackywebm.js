@@ -15,7 +15,7 @@ const getFileName = (p) => path.basename(p, path.extname(p))
 // this will make it Javascript's negative infinity.
 const resolveNumber = (n) => (isNaN(Number(n)) ? Number.NEGATIVE_INFINITY : Number(n))
 
-const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter', 'Keyframes']
+const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter', 'Audio-Both', 'Keyframes']
 module.exports = { modes }
 
 const type = { w: undefined }
@@ -354,7 +354,14 @@ async function main() {
 					width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				}
 				break
-			case 'Keyframes':
+			case 'Audio-Both':
+				{
+					const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
+					height = Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
+					width = Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
+				}
+				break
+      case 'Keyframes':
 				if (lastKf !== keyFrames.length - 1 && index >= keyFrames[lastKf + 1].time) {
 					lastKf++
 				}
@@ -377,6 +384,12 @@ async function main() {
 
 				break
 		}
+    // If it's the first frame, make it the same size as the original.
+    if (index === 0) {
+      width = maxWidth;
+      height = maxHeight;
+    }
+    
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 		// Tracks the new file for concatenation later.
