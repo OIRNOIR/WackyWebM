@@ -131,3 +131,8 @@ dist
 
 # MacOS
 *.DS_Store
+
+.idea/
+
+# Ignore tempfiles created during testing
+tempFiles/
