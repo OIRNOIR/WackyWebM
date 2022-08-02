@@ -4,6 +4,11 @@ This is a simple tool to allow you to create WebM files with changing aspect rat
 
 If you're having trouble installing the dependencies, or need help running the code, [this tutorial](https://www.youtube.com/watch?v=ZjGMjv1Gv94) is super helpful.
 
+### We have a Discord community!
+Share code, share modifications, learn from the community.
+
+[![Discord Invite Widget](https://invidget.switchblade.xyz/EdrqJ6AMKF)](https://discord.gg/EdrqJ6AMKF)
+
 ## Dependencies
 
 - NodeJS
@@ -15,6 +20,8 @@ If you're having trouble installing the dependencies, or need help running the c
 `node wackywebm.js [mode] <file>`
 
 If you're on windows, you can simply double-click `run.bat`, as long as it's in the same folder as `wackywebm.js`.
+
+If you're on MacOS or Linux, you can run `run.sh`. You may have to give it permission to execute with `chmod +x run.sh`.
 
 You can also tweak the script to taste if you want to adjust how your file is generated.
 
