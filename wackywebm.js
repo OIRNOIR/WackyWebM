@@ -128,54 +128,54 @@ function displayUsage() {
 }
 
 function infixToPostfix(expression) {
-	let outputQueue = [];
-	const operatorStack = [];
+	let outputQueue = []
+	const operatorStack = []
 	const operators = {
-		"/": {
+		'/': {
 			precedence: 2,
-			associativity: "Left"
+			associativity: 'Left',
 		},
-		"*": {
+		'*': {
 			precedence: 2,
-			associativity: "Left"
+			associativity: 'Left',
 		},
-		"+": {
+		'+': {
 			precedence: 1,
-			associativity: "Left"
+			associativity: 'Left',
 		},
-		"-": {
+		'-': {
 			precedence: 1,
-			associativity: "Left"
-		}
+			associativity: 'Left',
+		},
 	}
-	expression = expression.split(/([+\-*/()])/).filter(s => s !== "");
-	for(let i = 0; i < expression.length; i++) {
-		const token = expression[i];
-		if(/^\d+$/.test(token)) {
-			outputQueue.push(parseInt(token));
-		} else if("*/+-".indexOf(token) !== -1) {
-			const o1 = token;
-			const o2 = operatorStack[operatorStack.length - 1];
-			while("*/+-".indexOf(o2) !== -1 && ((operators[o1].associativity === "Left" && operators[o1].precedence <= operators[o2].precedence) || (operators[o1].associativity === "Right" && operators[o1].precedence < operators[o2].precedence))) {
-				outputQueue.push(operatorStack.pop());
+	expression = expression.split(/([+\-*/()])/).filter((s) => s !== '')
+	for (let i = 0; i < expression.length; i++) {
+		const token = expression[i]
+		if (/^\d+$/.test(token)) {
+			outputQueue.push(parseInt(token))
+		} else if ('*/+-'.indexOf(token) !== -1) {
+			const o1 = token
+			const o2 = operatorStack[operatorStack.length - 1]
+			while ('*/+-'.indexOf(o2) !== -1 && ((operators[o1].associativity === 'Left' && operators[o1].precedence <= operators[o2].precedence) || (operators[o1].associativity === 'Right' && operators[o1].precedence < operators[o2].precedence))) {
+				outputQueue.push(operatorStack.pop())
 			}
-			operatorStack.push(o1);
-		} else if(token === "(") {
-			operatorStack.push(token);
-		} else if(token === ")") {
-			while(operatorStack[operatorStack.length - 1] !== "(") {
-				outputQueue.push(operatorStack.pop());
+			operatorStack.push(o1)
+		} else if (token === '(') {
+			operatorStack.push(token)
+		} else if (token === ')') {
+			while (operatorStack[operatorStack.length - 1] !== '(') {
+				outputQueue.push(operatorStack.pop())
 			}
-			operatorStack.pop();
+			operatorStack.pop()
 		} else {
 			// variable name? treat like integer literal in this step
-			outputQueue.push(token);
+			outputQueue.push(token)
 		}
 	}
-	while(operatorStack.length > 0) {
-		outputQueue.push(operatorStack.pop());
+	while (operatorStack.length > 0) {
+		outputQueue.push(operatorStack.pop())
 	}
-	return outputQueue;
+	return outputQueue
 }
 
 let keyFrames = []
@@ -189,8 +189,8 @@ async function parseKeyFrameFile(framerate, originalWidth, originalHeight) {
 		// if there's only 1 "section" to the time, treat it as seconds. if there are 2, treat it as seconds:frames
 		let parsedTime = Math.floor(parseInt(time[0]) * framerate) + (time.length === 1 ? 0 : parseInt(time[1]))
 
-		const width = infixToPostfix((line[1]));
-		const height = infixToPostfix((line[2]));
+		const width = infixToPostfix(line[1])
+		const height = infixToPostfix(line[2])
 
 		let interpolation = line[3]
 
@@ -206,35 +206,28 @@ async function parseKeyFrameFile(framerate, originalWidth, originalHeight) {
 	for (let dataIndex = 0; dataIndex < data.length; dataIndex++) {
 		// if false is passed as evaluatingHeight, we are evaluating a width.
 		const evaluatePostfix = (postfix, evaluatingHeight) => {
-			const queue = [];
+			const queue = []
 			for (let i = 0; i < postfix.length; i++) {
-				if (/^\d+$/.test(postfix[i]))
-					queue.push(postfix[i]);
-				else if (postfix[i] === '+')
-					queue.push(queue.pop() + queue.pop());
+				if (/^\d+$/.test(postfix[i])) queue.push(postfix[i])
+				else if (postfix[i] === '+') queue.push(queue.pop() + queue.pop())
 				else if (postfix[i] === '-')
 					// slightly awkward way of subtracting, since we want to subtract the 2nd element from the first, not the other way.
-					queue.push(-queue.pop() + queue.pop());
-				else if (postfix[i] === '*')
-					queue.push(queue.pop() * queue.pop());
+					queue.push(-queue.pop() + queue.pop())
+				else if (postfix[i] === '*') queue.push(queue.pop() * queue.pop())
 				else if (postfix[i] === '/') {
-					const b = queue.pop();
-					queue.push(queue.pop() / b);
-				} else if (postfix[i].toLowerCase() === "lastWidth")
-					queue.push(data[dataIndex - 1].width);
-				else if (postfix[i].toLowerCase() === "lastHeight")
-					queue.push(data[dataIndex - 1].height);
-				else if (postfix[i].toLowerCase() === "last")
-					queue.push(data[dataIndex - 1][evaluatingHeight ? "height" : "width"]);
-				else if (postfix[i].toLowerCase() === "original")
-					queue.push(evaluatingHeight ? originalHeight : originalWidth);
+					const b = queue.pop()
+					queue.push(queue.pop() / b)
+				} else if (postfix[i].toLowerCase() === 'lastWidth') queue.push(data[dataIndex - 1].width)
+				else if (postfix[i].toLowerCase() === 'lastHeight') queue.push(data[dataIndex - 1].height)
+				else if (postfix[i].toLowerCase() === 'last') queue.push(data[dataIndex - 1][evaluatingHeight ? 'height' : 'width'])
+				else if (postfix[i].toLowerCase() === 'original') queue.push(evaluatingHeight ? originalHeight : originalWidth)
 			}
 
-			return Math.floor(queue[0]);
+			return Math.floor(queue[0])
 		}
 
-		data[dataIndex].width = evaluatePostfix(data[dataIndex].width, false);
-		data[dataIndex].height = evaluatePostfix(data[dataIndex].height, true);
+		data[dataIndex].width = evaluatePostfix(data[dataIndex].width, false)
+		data[dataIndex].height = evaluatePostfix(data[dataIndex].height, true)
 	}
 
 	keyFrames = data

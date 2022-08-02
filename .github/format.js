@@ -13,7 +13,7 @@ fs.readFile('../run.sh', 'utf8', function (err, data) {
 })
 
 fs.readFile('../run.bat', 'utf8', function (err, data) {
-	let re = new RegExp('set \/p "mode=Mode (.+): "', 'gi')
+	let re = new RegExp('set /p "mode=Mode (.+): "', 'gi')
 	let formatted = data.replace(re, 'set /p "mode=Mode (' + modes.join(', ') + '): "')
 
 	fs.writeFile('../run.bat', formatted, 'utf8', function (err) {
