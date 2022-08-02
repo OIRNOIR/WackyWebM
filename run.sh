@@ -11,7 +11,7 @@ echo "
 "
 
 # Ask for required inputs
-read -p "Mode (Bounce, Shutter, Sporadic, Bounce+Shutter, Shrink, Audio-Bounce, Audio-Shutter): " mode
+read -p "Mode (Bounce, Shutter, Sporadic, Bounce+Shutter, Shrink, Audio-Bounce, Audio-Shutter, Audio-Both): " mode
 read -p "File: " file
 
 # Run node commmand

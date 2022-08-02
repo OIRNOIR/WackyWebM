@@ -15,7 +15,7 @@ const getFileName = (p) => path.basename(p, path.extname(p))
 // this will make it Javascript's negative infinity.
 const resolveNumber = (n) => (isNaN(Number(n)) ? Number.NEGATIVE_INFINITY : Number(n))
 
-const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter', 'Keyframes', 'Jumpscare']
+const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter', 'Audio-Both', 'Keyframes', 'Jumpscare']
 module.exports = { modes }
 
 const type = { w: undefined }
@@ -127,6 +127,57 @@ function displayUsage() {
 	console.log(Usage)
 }
 
+function infixToPostfix(expression) {
+	let outputQueue = []
+	const operatorStack = []
+	const operators = {
+		'/': {
+			precedence: 2,
+			associativity: 'Left',
+		},
+		'*': {
+			precedence: 2,
+			associativity: 'Left',
+		},
+		'+': {
+			precedence: 1,
+			associativity: 'Left',
+		},
+		'-': {
+			precedence: 1,
+			associativity: 'Left',
+		},
+	}
+	expression = expression.split(/([+\-*/()])/).filter((s) => s !== '')
+	for (let i = 0; i < expression.length; i++) {
+		const token = expression[i]
+		if (/^\d+$/.test(token)) {
+			outputQueue.push(parseInt(token))
+		} else if ('*/+-'.indexOf(token) !== -1) {
+			const o1 = token
+			const o2 = operatorStack[operatorStack.length - 1]
+			while ('*/+-'.indexOf(o2) !== -1 && ((operators[o1].associativity === 'Left' && operators[o1].precedence <= operators[o2].precedence) || (operators[o1].associativity === 'Right' && operators[o1].precedence < operators[o2].precedence))) {
+				outputQueue.push(operatorStack.pop())
+			}
+			operatorStack.push(o1)
+		} else if (token === '(') {
+			operatorStack.push(token)
+		} else if (token === ')') {
+			while (operatorStack[operatorStack.length - 1] !== '(') {
+				outputQueue.push(operatorStack.pop())
+			}
+			operatorStack.pop()
+		} else {
+			// variable name? treat like integer literal in this step
+			outputQueue.push(token)
+		}
+	}
+	while (operatorStack.length > 0) {
+		outputQueue.push(operatorStack.pop())
+	}
+	return outputQueue
+}
+
 let keyFrames = []
 async function parseKeyFrameFile(framerate, originalWidth, originalHeight) {
 	const content = (await fs.promises.readFile(keyFrameFile)).toString()
@@ -138,8 +189,8 @@ async function parseKeyFrameFile(framerate, originalWidth, originalHeight) {
 		// if there's only 1 "section" to the time, treat it as seconds. if there are 2, treat it as seconds:frames
 		let parsedTime = Math.floor(parseInt(time[0]) * framerate) + (time.length === 1 ? 0 : parseInt(time[1]))
 
-		let width = parseInt(line[1])
-		let height = parseInt(line[2])
+		const width = infixToPostfix(line[1])
+		const height = infixToPostfix(line[2])
 
 		let interpolation = line[3]
 
@@ -147,8 +198,38 @@ async function parseKeyFrameFile(framerate, originalWidth, originalHeight) {
 	})
 	data = data.sort((a, b) => a.time - b.time)
 	if (data[0].time !== 0) {
-		data = [{ time: 0, width: originalWidth, height: originalHeight, interpolation: 'linear' }, ...data]
+		data = [{ time: 0, width: [originalWidth], height: [originalHeight], interpolation: 'linear' }, ...data]
 	}
+
+	// evaluate expressions for width/height
+	// can't use map here, since we access previous elements from within the later ones.
+	for (let dataIndex = 0; dataIndex < data.length; dataIndex++) {
+		// if false is passed as evaluatingHeight, we are evaluating a width.
+		const evaluatePostfix = (postfix, evaluatingHeight) => {
+			const queue = []
+			for (let i = 0; i < postfix.length; i++) {
+				if (/^\d+$/.test(postfix[i])) queue.push(postfix[i])
+				else if (postfix[i] === '+') queue.push(queue.pop() + queue.pop())
+				else if (postfix[i] === '-')
+					// slightly awkward way of subtracting, since we want to subtract the 2nd element from the first, not the other way.
+					queue.push(-queue.pop() + queue.pop())
+				else if (postfix[i] === '*') queue.push(queue.pop() * queue.pop())
+				else if (postfix[i] === '/') {
+					const b = queue.pop()
+					queue.push(queue.pop() / b)
+				} else if (postfix[i].toLowerCase() === 'lastWidth') queue.push(data[dataIndex - 1].width)
+				else if (postfix[i].toLowerCase() === 'lastHeight') queue.push(data[dataIndex - 1].height)
+				else if (postfix[i].toLowerCase() === 'last') queue.push(data[dataIndex - 1][evaluatingHeight ? 'height' : 'width'])
+				else if (postfix[i].toLowerCase() === 'original') queue.push(evaluatingHeight ? originalHeight : originalWidth)
+			}
+
+			return Math.floor(queue[0])
+		}
+
+		data[dataIndex].width = evaluatePostfix(data[dataIndex].width, false)
+		data[dataIndex].height = evaluatePostfix(data[dataIndex].height, true)
+	}
+
 	keyFrames = data
 }
 // various kinds of interpolation go here.
@@ -241,18 +322,18 @@ async function main() {
 		// Makes the height/width changes based on the selected type.
 		switch (type.w) {
 			case 'Bounce':
-				height = index === 0 ? maxHeight : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
+				height = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
 				break
 			case 'Shutter':
-				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
+				width = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
 				break
 			case 'Sporadic':
-				width = index === 0 ? maxWidth : Math.floor(Math.random() * (maxWidth - delta)) + delta
-				height = index === 0 ? maxHeight : Math.floor(Math.random() * (maxHeight - delta)) + delta
+				width = Math.floor(Math.random() * (maxWidth - delta)) + delta
+				height = Math.floor(Math.random() * (maxHeight - delta)) + delta
 				break
 			case 'Bounce+Shutter':
-				height = index === 0 ? maxHeight : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
-				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.sin((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
+				height = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
+				width = Math.floor(Math.abs(Math.sin((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
 				break
 			case 'Shrink':
 				height = Math.max(1, Math.floor(maxHeight - (index / tempFramesFrames.length) * maxHeight))
@@ -263,8 +344,8 @@ async function main() {
 					// Since audio frames don't match video frames, this calculates the percentage
 					// through the file a video frame is and grabs the closest audio frame's decibels.
 					const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
-					height = index === 0 ? maxHeight : Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
-					//width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
+					height = Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
+					//width = Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				}
 				break
 
@@ -278,7 +359,14 @@ async function main() {
 			case 'Audio-Shutter':
 				{
 					const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
-					width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
+					width = Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
+				}
+				break
+			case 'Audio-Both':
+				{
+					const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
+					height = Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
+					width = Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				}
 				break
 			case 'Keyframes':
@@ -312,6 +400,12 @@ async function main() {
 		}	
 				
 		}
+		// If it's the first frame, make it the same size as the original, except for Keyframes mode, where the user has control.
+		if (index === 0 && type.w != 'Keyframes') {
+			width = maxWidth
+			height = maxHeight
+		}
+
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 		// Tracks the new file for concatenation later.
