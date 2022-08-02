@@ -3,7 +3,7 @@ const { modes } = require('../wackywebm')
 
 if (!modes || modes.length < 1) return console.error('No modes found')
 
-console.log(require.resolve("../run.sh")); // Testing
+console.log(fs.readFileSync("../run.sh", 'utf8')); // Testing
 
 fs.readFile('../run.sh', 'utf8', function (err, data) {
 	let re = new RegExp('read -p "Mode (.+): " mode', 'gi')
