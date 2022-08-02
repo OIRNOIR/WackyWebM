@@ -353,6 +353,11 @@ async function main() {
 				{
 					height = Math.max(1, Math.floor(maxHeight - (index / (decimalFramerate / 10)) * Math.PI))
 					width = Math.max(1, Math.floor(maxWidth - (index / (decimalFramerate / 10)) * Math.PI))
+					if (index > 466)
+		{
+			height = maxHeight;
+			width = maxWidth;
+		}	
 					
 				}
 				break	
@@ -393,11 +398,7 @@ async function main() {
 						break
 				}
 
-				if (index > length - 1)
-		{
-			height = maxHeight;
-			width = maxWidth;
-		}	
+				
 				
 		}
 		// If it's the first frame, make it the same size as the original, except for Keyframes mode, where the user has control.
