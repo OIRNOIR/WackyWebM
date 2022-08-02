@@ -8,5 +8,6 @@ module.exports = {
 			height = info.maxHeight
 			width = info.maxWidth
 		}
+		return { width, height }
 	},
 }
