@@ -217,6 +217,8 @@ async function main() {
 
 	process.stdout.write(`Converting frames to webm (File ${index}/${tempFramesFrames.length})...`)
 
+	let lastWidth = -1, lastHeight = -1, sameSizeCount = 0;
+
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 
@@ -240,9 +242,18 @@ async function main() {
 		if (frameBounds.height === undefined) frameBounds.height = maxHeight
 
 		// Creates the respective resized frame based on the above.
-		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+		if (index !== 0 && (frameBounds.width !== lastWidth || frameBounds.height !== lastHeight)) {
+			await execSync(`ffmpeg -y -start_number ${index - sameSizeCount + 1} -i "${path.join(workLocations.tempFrames, "%d.png")}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${lastWidth}x${lastHeight} -aspect ${frameBounds.width}:${frameBounds.height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+			lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
+			sameSizeCount = 1;
+		}else {
+			sameSizeCount++;
+		}
+
+		lastWidth = frameBounds.width;
+		lastHeight = frameBounds.height;
+
 		// Tracks the new file for concatenation later.
-		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
 		index++
 		process.stdout.clearLine()
 		process.stdout.cursorTo(0)
