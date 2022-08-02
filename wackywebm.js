@@ -15,23 +15,68 @@ const getFileName = (p) => path.basename(p, path.extname(p))
 // this will make it Javascript's negative infinity.
 const resolveNumber = (n) => (isNaN(Number(n)) ? Number.NEGATIVE_INFINITY : Number(n))
 
-const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter']
+const modes = ['Bounce', 'Shutter', 'Sporadic', 'Bounce+Shutter', 'Shrink', 'Audio-Bounce', 'Audio-Shutter', 'Keyframes']
 
-if (process.argv.length < 3 || process.argv.length > 4) return displayUsage()
+const type = { w: undefined }
+let videoPath = '',
+	outputPath = undefined,
+	keyFrameFile = undefined
 
-// Process input arguments. Assume first argument is the desired output type, and if
-// it matches none, assume part of the rawVideoPath and unshift it back before joining.
-const [inputType, ...rawVideoPath] = process.argv.slice(2),
-	type = { w: modes.find((m) => m.toLowerCase() == inputType.toLowerCase())?.replace(/\+/g, '_') }
+for (let i = 2; i < process.argv.length; i++) {
+	const arg = process.argv[i]
 
-if (type.w == undefined) {
-	rawVideoPath.unshift(inputType)
-	type.w = 'Bounce' // Default type
+	// named arguments
+	//
+	// output file
+	if (arg === '-o' || arg === '--output') {
+		// no argument after "-o" 			  || not the first "-o" argument
+		if (i === process.argv.length - 1 || outputPath !== undefined) {
+			return displayUsage()
+		}
+		// consume the next argument, so we dont iterate over it again
+		outputPath = process.argv[++i]
+		continue
+	}
+	// keyframe file
+	if (arg === '-k' || arg === '--keyframes') {
+		// no argument after "-k" 			  || not the first "-k" argument
+		if (i === process.argv.length - 1 || keyFrameFile !== undefined) {
+			return displayUsage()
+		}
+		keyFrameFile = process.argv[++i]
+		continue
+	}
+
+	// positional arguments
+	//
+	// basically, first positional argument is inputType, second one
+	// (and every one after that) is video path, except when the first one doesn't
+	// match any of the input types, in which case its also part of the path.
+	if (type.w === undefined && modes.map((m) => m.toLowerCase()).includes(arg.toLowerCase())) {
+		type.w = modes.find((m) => m.toLowerCase() === arg.toLowerCase()).replace(/\+/g, '_')
+	} else {
+		if (type.w === undefined) type.w = 'Bounce'
+		videoPath += arg + ' '
+	}
 }
 
-const videoPath = rawVideoPath.join(' ').trim()
+// not a single positional argument; we need at least 1
+if (type.w === undefined) return displayUsage()
+
+// Keyframes mode selected without providing keyframe file
+if (type.w === 'Keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) return displayUsage()
+
+// got 1 positional argument, which was the mode to use - no file path!
+if (videoPath === '') return displayUsage()
+
+// we always append 1 extra space, so remove the last one.
+videoPath = videoPath.substring(0, videoPath.length - 1)
+
 const fileName = getFileName(videoPath),
 	filePath = path.dirname(videoPath)
+
+// no "-o" argument, use default path in the format "chungus_Bounce.webm"
+if (outputPath === undefined) outputPath = path.join(filePath, `${fileName}_${type.w}.webm`)
 
 // These could be arguments, as well. They could also be taken via user input with readline.
 const delta = 2,
@@ -41,6 +86,7 @@ const delta = 2,
 // All temporary files are within one parent folder for cleanliness and ease of removal.
 const workLocations = {}
 function buildLocations() {
+	// maybe use `os.tmpdir()` instead of the cwd?
 	workLocations.tempFolder = path.join(__dirname, 'tempFiles')
 	workLocations.tempAudio = path.join(workLocations.tempFolder, 'tempAudio.webm')
 	//workLocations.tempVideo = path.join(workLocations.tempFolder, 'tempVideo.webm')
@@ -48,11 +94,54 @@ function buildLocations() {
 	workLocations.tempFrames = path.join(workLocations.tempFolder, 'tempFrames')
 	workLocations.tempFrameFiles = path.join(workLocations.tempFrames, '%d.png')
 	workLocations.tempResizedFrames = path.join(workLocations.tempFolder, 'tempResizedFrames')
-	workLocations.outputFile = path.join(filePath, `${fileName}_${type.w}.webm`)
+	workLocations.outputFile = outputPath
 }
 
 function displayUsage() {
-	console.log(`WackyWebM by OIRNOIR#0032\nUsage: node wackywebm [optional_type: ${modes.join(', ').toLowerCase()}] <input_file>`)
+	const Usage =
+		'WackyWebM by OIRNOIR#0032\n' +
+		'Usage: node wackywebm.js [-o output_file_path] [optional_type] [-k keyframe_file] <input_file>\n' +
+		'\t-o,--output: change output file path (needs the desired output path as an argument)\n' +
+		'\t-k,--keyframes: only required with the type set to "Keyframes", sets the path to the keyframe file\n\n' +
+		'Recognized Modes:\n' +
+		modes
+			.map((m) => `\t${m}`)
+			.join('\n')
+			.toLowerCase() +
+		'\nIf no mode is specified, "Bounce" is used.'
+	console.log(Usage)
+}
+
+let keyFrames = []
+async function parseKeyFrameFile(framerate, originalWidth, originalHeight) {
+	const content = (await fs.promises.readFile(keyFrameFile)).toString()
+	// CRLF is annoying.
+	const lines = content.split('\n').filter((s) => s !== '')
+	let data = lines.map((l) => l.replace(/\s/g, '').split(','))
+	data = data.map((line) => {
+		let time = line[0].split(/[:.-]/)
+		// if there's only 1 "section" to the time, treat it as seconds. if there are 2, treat it as seconds:frames
+		let parsedTime = Math.floor(parseInt(time[0]) * framerate) + (time.length === 1 ? 0 : parseInt(time[1]))
+
+		let width = parseInt(line[1])
+		let height = parseInt(line[2])
+
+		let interpolation = line[3]
+
+		return { time: parsedTime, width, height, interpolation }
+	})
+	data = data.sort((a, b) => a.time - b.time)
+	if (data[0].time !== 0) {
+		data = [{ time: 0, width: originalWidth, height: originalHeight, interpolation: 'linear' }, ...data]
+	}
+	keyFrames = data
+}
+// various kinds of interpolation go here.
+function lerp(a, b, t) {
+	// convert the inputs to floats for accuracy, then convert the result back to an integer at the end
+	a = a + 0.0
+	b = b + 0.0
+	return Math.floor(a + t * (b - a))
 }
 
 // Obtains a map of the audio levels in decibels from the input file.
@@ -88,6 +177,11 @@ async function main() {
 	maxHeight = Number(maxHeight)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
 
+	if (type.w === 'Keyframes') {
+		console.log(`Parsing Keyframe File ${keyFrameFile}`)
+		await parseKeyFrameFile(decimalFramerate, maxWidth, maxHeight)
+	}
+
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
 	console.log(`Resolution is ${maxWidth}x${maxHeight}.\nFramerate is ${framerate} (${decimalFramerate}).\nCreating temporary directories...`)
 
@@ -120,7 +214,8 @@ async function main() {
 		lines = [],
 		width = maxWidth,
 		height = maxHeight,
-		length = tempFramesFrames.length
+		length = tempFramesFrames.length,
+		lastKf = 0
 	if (type.w.includes('Audio')) {
 		type.audioMap = await getAudioLevelMap()
 		type.audioMapL = type.audioMap.length - 1
@@ -163,6 +258,28 @@ async function main() {
 					width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
 				}
 				break
+			case 'Keyframes':
+				if (lastKf !== keyFrames.length - 1 && index >= keyFrames[lastKf + 1].time) {
+					lastKf++
+				}
+				if (lastKf === keyFrames.length - 1) {
+					// no more keyframes after this; keep current size.
+					width = keyFrames[lastKf].width
+					height = keyFrames[lastKf].height
+					break
+				}
+
+				// eslint-disable-next-line no-case-declarations
+				const t = (index - keyFrames[lastKf].time) / (keyFrames[lastKf + 1].time - keyFrames[lastKf].time)
+				// who doesnt love more switches :)
+				switch (keyFrames[lastKf].interpolation.toLowerCase()) {
+					case 'linear':
+						width = lerp(keyFrames[lastKf].width, keyFrames[lastKf + 1].width, t)
+						height = lerp(keyFrames[lastKf].height, keyFrames[lastKf + 1].height, t)
+						break
+				}
+
+				break
 		}
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
@@ -185,7 +302,7 @@ async function main() {
 
 	// Applies the audio to the new file to form the final file.
 	//console.log('Applying audio to create final webm file...')
-	//await execSync(`ffmpeg -y -i "${workLocations.tempVideo}" -i "${workLocations.tempAudio}" -c copy "${path.join(filePath, `${fileName}_${type.w}.webm`)}"`)
+	//await execSync(`ffmpeg -y -i "${workLocations.tempVideo}" -i "${workLocations.tempAudio}" -c copy "${path.join(filePath, `${fileName}_${inputType}.webm`)}"`)
 
 	// Congatenates segments and applies te original audio to the new file.
 	console.log(`Concatenating segments${audioFlag ? ' and applying audio ' : ' '}for final webm file...`)
