@@ -20,98 +20,124 @@ for (const modeFile of fs.readdirSync(`${__dirname}/modes/`).filter(file => file
 }
 module.exports = { modes }
 
-const type = { w: undefined }
-let videoPath = '',
+const type = {w: undefined}
+let videoPath = undefined,
+	fileName = undefined,
+	filePath = undefined,
 	outputPath = undefined,
 	keyFrameFile = undefined,
 	bitrate = undefined,
-	tempo = undefined
+	tempo = undefined,
+	angle = undefined
 
-for (let i = 2; i < process.argv.length; i++) {
-	const arg = process.argv[i]
-
-	// named arguments
-	//
-	// output file
-	if (arg === '-o' || arg === '--output') {
-		// no argument after "-o" 			  || not the first "-o" argument
-		if (i === process.argv.length - 1 || outputPath !== undefined) {
-			return displayUsage()
+const argsConfig = [
+	{
+		keys: ['-h', '--help'],
+		allowLestArg: true,
+		call: () => {
+			displayUsage()
+			process.exit(1)
 		}
-		// consume the next argument, so we dont iterate over it again
-		outputPath = process.argv[++i]
-		continue
-	}
-	// keyframe file
-	if (arg === '-k' || arg === '--keyframes') {
-		// no argument after "-k" 			  || not the first "-k" argument
-		if (i === process.argv.length - 1 || keyFrameFile !== undefined) {
-			return displayUsage()
+	},
+	{
+		keys: ['-k', '--keyframes'],
+		call: (val) => keyFrameFile = val, getValue: () => keyFrameFile
+	},
+	{
+		keys: ['-b', '--bitrate'],
+		// Default bitrate: 1M
+		default: () => bitrate = '1M',
+		call: (val) => bitrate = val, getValue: () => bitrate
+	},
+	{
+		keys: ['-t', '--tempo'],
+		default: () => tempo = 2,
+		call: (val) => tempo = val, getValue: () => tempo
+	},
+	{
+		keys: ['-a', '--angle'],
+		default: () => angle = 360,
+		call: (val) => angle = val, getValue: () => angle
+	},
+	{
+		keys: ['-o', '--output'],
+		// no "-o" argument, use default path in the format "chungus_Bounce.webm"
+		default: () => outputPath = path.join(filePath, `${fileName}_${type.w.replace(/\+/g, '_')}.webm`),
+		call: (val) => outputPath = val, getValue: () => outputPath
+	},
+]
+
+function parseCommandArguments() {
+	for (let i = 2; i < process.argv.length; i++) {
+		const arg = process.argv[i]
+
+		// named arguments
+		if (arg.startsWith('-')) {
+			let argFound = false;
+			for (const j of argsConfig) {
+				// no argument after 			  || not the first "-o" argument
+				if (!j.allowLestArg && i === process.argv.length - 1 || (j.getValue && j.getValue() !== undefined)) {
+					console.error(`Illegal argument: ${arg}`)
+					return displayUsage()
+				}
+				if (j.keys.includes(arg)) {
+					j.call(++i === process.argv.length ? null : process.argv[i])
+					argFound = true;
+					break
+				}
+			}
+			if (!argFound) {
+				console.error(`Illegal argument: ${arg}`)
+				return displayUsage()
+			}
+			continue
 		}
-		keyFrameFile = process.argv[++i]
-		continue
-	}
-	// customizable bitrate
-	if (arg === '-b' || arg === '--bitrate') {
-		// no argument after "-b" 			  || not the first "-b" argument
-		if (i === process.argv.length - 1 || bitrate !== undefined) {
-			return displayUsage()
+		// positional arguments
+		//
+		// basically, first positional argument is inputType, second one
+		// (and every one after that) is video path, except when the first one doesn't
+		// match any of the input types, in which case its also part of the path.
+		// split by + before trying to match to modes in order to support using multiple modes.
+		if (type.w === undefined &&
+			arg.split(/\+/g).every((x) =>
+				Object.keys(modes)
+					.map((m) => m.toLowerCase())
+					.includes(x.toLowerCase())
+			)
+		) {
+			type.w = arg.toLowerCase()
+		} else {
+			if (videoPath) videoPath += ' ' + arg
+			else videoPath = arg
 		}
-		bitrate = process.argv[++i]
-		continue
-	}
-	// customizable bouncesPerSecond (hereinafter known as Tempo)
-	if (arg === '-t' || arg === '--tempo') {
-		// no argument after "-t" 			  || not the first "-t" argument
-		if (i === process.argv.length - 1 || tempo !== undefined) {
-			return displayUsage()
-		}
-		tempo = process.argv[++i]
-		continue
 	}
 
-	// positional arguments
-	//
-	// basically, first positional argument is inputType, second one
-	// (and every one after that) is video path, except when the first one doesn't
-	// match any of the input types, in which case its also part of the path.
-	// split by + before trying to match to modes in order to support using multiple modes.
-	if (
-		type.w === undefined &&
-		arg.split(/\+/g).every((x) =>
-			Object.keys(modes)
-				.map((m) => m.toLowerCase())
-				.includes(x.toLowerCase())
-		)
-	) {
-		type.w = arg.toLowerCase()
-	} else {
-		if (type.w === undefined) type.w = 'Bounce'
-		videoPath += arg + ' '
+	// not a single positional argument; we need at least 1
+	if (type.w === undefined) {
+		type.w = 'Bounce'
+		console.warn(`Mode not selected, using default "${type.w}".`)
 	}
-}
+	// Keyframes mode selected without providing keyframe file
+	if (type.w === 'Keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
+		if (keyFrameFile)
+			console.error(`Keyframes file not found. "${keyFrameFile}"`)
+		else
+			console.error(`Keyframes file not given.`)
+		return displayUsage()
+	}
 
-// not a single positional argument; we need at least 1
-if (type.w === undefined) return displayUsage()
-
-// Keyframes mode selected without providing keyframe file
-if (type.w === 'Keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) return displayUsage()
-
-// got 1 positional argument, which was the mode to use - no file path!
-if (videoPath === '') return displayUsage()
-
-// we always append 1 extra space, so remove the last one.
-videoPath = videoPath.substring(0, videoPath.length - 1)
-
-// Default bitrate: 1M
-if (bitrate === undefined) bitrate = '1M'
-if (tempo === undefined) tempo = 2
-
-const fileName = getFileName(videoPath),
+	// got 1 positional argument, which was the mode to use - no file path!
+	if (videoPath === undefined) {
+		console.error('Video file not given.')
+		return displayUsage()
+	}
+	fileName = getFileName(videoPath)
 	filePath = path.dirname(videoPath)
 
-// no "-o" argument, use default path in the format "chungus_Bounce.webm"
-if (outputPath === undefined) outputPath = path.join(filePath, `${fileName}_${type.w.replace(/\+/g, '_')}.webm`)
+	// check if value not given, use default
+	for (const i of argsConfig)
+		if (i.default && i.getValue() === undefined) i.default();
+}
 
 // Build an index of temporary locations so they do not need to be repeatedly rebuilt.
 // All temporary files are within one parent folder for cleanliness and ease of removal.
@@ -148,7 +174,13 @@ function displayUsage() {
 
 async function main() {
 	// Verify the given path is accessible.
-	if (!videoPath || !fs.existsSync(videoPath)) return displayUsage()
+	if (!videoPath || !fs.existsSync(videoPath)) {
+		if (videoPath)
+			console.error(`Keyframes file not found. "${videoPath}"`)
+		else
+			console.error(`Keyframes file not given.`)
+		return displayUsage()
+	}
 
 	// Only build the path if temporary location index if the code can move forward. Less to do.
 	buildLocations()
@@ -226,7 +258,8 @@ async function main() {
 			maxHeight: maxHeight,
 			frameCount: length,
 			frameRate: decimalFramerate,
-			tempo: tempo
+			tempo: tempo,
+			angle: angle,
 		}
 
 		const frameBounds = {}
@@ -234,13 +267,23 @@ async function main() {
 			const current = modes[mode].getFrameBounds(infoObject)
 			if (current.width !== undefined) frameBounds.width = current.width
 			if (current.height !== undefined) frameBounds.height = current.height
+			if (current.command !== undefined) frameBounds.command = current.command
 		}
 
 		if (frameBounds.width === undefined) frameBounds.width = maxWidth
 		if (frameBounds.height === undefined) frameBounds.height = maxHeight
 
 		// Creates the respective resized frame based on the above.
-		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+
+		try {
+			if (frameBounds.command)
+				await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 ${frameBounds.command} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+			else
+				await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+		} catch (e) {
+			console.error(e.message.split('\n').filter(m => !m.startsWith('  configuration:')).join('\n'))
+			return
+		}
 		// Tracks the new file for concatenation later.
 		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
 		index++
@@ -272,4 +315,6 @@ async function main() {
 	console.log('Done!\nRemoving temporary files...')
 	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
+
+void parseCommandArguments();
 void main()
