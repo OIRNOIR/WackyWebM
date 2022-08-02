@@ -1,23 +1,17 @@
 @echo off
  
-::: __          __        _       __          __  _     __  __ 
-::: \ \        / /       | |      \ \        / / | |   |  \/  |
-:::  \ \  /\  / /_ _  ___| | ___   \ \  /\  / /__| |__ | \  / |
-:::   \ \/  \/ / _` |/ __| |/ / | | \ \/  \/ / _ \ '_ \| |\/| |
-:::    \  /\  / (_| | (__|   <| |_| |\  /\  /  __/ |_) | |  | |
-:::     \/  \/ \__,_|\___|_|\_\\__, | \/  \/ \___|_.__/|_|  |_|
-:::                             __/ |                          
-:::                            |___/                           
-
 REM Print Ascii Art
-for /f "delims=: tokens=*" %%A in ('findstr /b ::: "%~f0"') do @echo(%%A
+echo __          __        _       __          __  _     __  __
+echo \ \        / /       ^| ^|      \ \        / / ^| ^|   ^|  \/  ^|
+echo  \ \  /\  / /_ _  ___^| ^| ___   \ \  /\  / /__^| ^|__ ^| \  / ^|
+echo   \ \/  \/ / _` ^|/ __^| ^|/ / ^| ^| \ \/  \/ / _ \ '_ \^| ^|\/^| ^|
+echo    \  /\  / (_^| ^| (__^|   ^<^| ^|_^| ^|\  /\  /  __/ ^|_) ^| ^|  ^| ^|
+echo     \/  \/ \__,_^|\___^|_^|\_\\__, ^| \/  \/ \___^|_.__/^|_^|  ^|_^|
+echo                             __/ ^|
+echo                            ^|___/
 
-REM Ask for required inputs
-set /p "mode=Mode (Bounce, Shutter, Sporadic, Shrink, AudioBounce, AudioShutter, AudioBoth, Keyframes): "
-set /p "file=File: "
+echo installing dependencies (this might take up to a few minutes the first time, it will be skipped in any subsequent start.)
+npm i
 
-REM Run node commmand
-node wackywebm.js %mode% "%file%"
-
-REM Wait for keyboard input
-pause
+echo starting GUI...
+node nodegui-wrapper.js
