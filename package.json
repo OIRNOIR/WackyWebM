@@ -6,10 +6,10 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"start": "node .",
-		"fmt": "prettier --write '**/*.{md,css,js,json}'",
-		"fmt:check": "prettier --check '**/*.{md,css,js,json}'",
-		"lint": "eslint '**/*.js'",
-		"lint:fix": "eslint '**/*.js' --fix"
+		"fmt": "prettier --write **/*.{md,css,js,json}",
+		"fmt:check": "prettier --check **/*.{md,css,js,json}",
+		"lint": "eslint **/*.js",
+		"lint:fix": "eslint **/*.js --fix"
 	},
 	"repository": {
 		"type": "git",
