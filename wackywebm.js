@@ -264,5 +264,4 @@ async function main() {
 	console.log('Done!\nRemoving temporary files...')
 	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
-
 void main()
