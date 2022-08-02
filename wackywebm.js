@@ -14,14 +14,9 @@ const ourUtil = require('./util')
 const execSync = util.promisify(require('child_process').exec)
 const getFileName = (p) => path.basename(p, path.extname(p))
 
-const modes = {
-	bounce: require('./modes/bounce.js'),
-	shutter: require('./modes/shutter.js'),
-	sporadic: require('./modes/sporadic'),
-	shrink: require('./modes/shrink.js'),
-	'audio-bounce': require('./modes/audiobounce.js'),
-	'audio-shutter': require('./modes/audioshutter.js'),
-	keyframes: require('./modes/keyframes.js'),
+const modes = {}
+for (const modeFile of fs.readdirSync(__dirname + "/modes/").filter(file => file.endsWith(".js"))) {
+	modes[modeFile.split(".")[0]] = require(`${__dirname}/modes/${modeFile}`);
 }
 module.exports = { modes }
 
@@ -143,7 +138,7 @@ function displayUsage() {
 		'\t-b,--bitrate: change the bitrate used to encode the file (Default is 1 MB/s)\n' +
 		'\t-t,--tempo: change the bounces per second on "Bounce" and "Shutter" modes\n\n' +
 		'Recognized Modes:\n' +
-		modes
+		Object.keys(modes)
 			.map((m) => `\t${m}`)
 			.join('\n')
 			.toLowerCase() +
