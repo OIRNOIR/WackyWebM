@@ -349,18 +349,16 @@ async function main() {
 				}
 				break
 
-				case 'Jumpscare':
+			case 'Jumpscare':
 				{
 					height = Math.max(1, Math.floor(maxHeight - (index / (decimalFramerate / 10)) * Math.PI))
 					width = Math.max(1, Math.floor(maxWidth - (index / (decimalFramerate / 10)) * Math.PI))
-					if (index > 466)
-		{
-			height = maxHeight;
-			width = maxWidth;
-		}	
-					
+					if (index > 466) {
+						height = maxHeight
+						width = maxWidth
+					}
 				}
-				break	
+				break
 			case 'Audio-Shutter':
 				{
 					const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
@@ -384,9 +382,6 @@ async function main() {
 					height = keyFrames[lastKf].height
 					break
 				}
-				
-		
-		
 
 				// eslint-disable-next-line no-case-declarations
 				const t = (index - keyFrames[lastKf].time) / (keyFrames[lastKf + 1].time - keyFrames[lastKf].time)
@@ -398,8 +393,7 @@ async function main() {
 						break
 				}
 
-				
-				
+				break
 		}
 		// If it's the first frame, make it the same size as the original, except for Keyframes mode, where the user has control.
 		if (index === 0 && type.w !== 'Keyframes') {
