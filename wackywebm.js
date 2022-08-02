@@ -15,8 +15,8 @@ const execSync = util.promisify(require('child_process').exec)
 const getFileName = (p) => path.basename(p, path.extname(p))
 
 const modes = {}
-for (const modeFile of fs.readdirSync(__dirname + "/modes/").filter(file => file.endsWith(".js"))) {
-	modes[modeFile.split(".")[0]] = require(`${__dirname}/modes/${modeFile}`);
+for (const modeFile of fs.readdirSync(`${__dirname}/modes/`).filter(file => file.endsWith('.js'))) {
+	modes[modeFile.split('.')[0]] = require(`${__dirname}/modes/${modeFile}`)
 }
 module.exports = { modes }
 

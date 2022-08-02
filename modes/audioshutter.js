@@ -2,7 +2,7 @@ const util = require('../util.js')
 let audioMap
 let audioMapL
 module.exports = {
-	setup: async info => {
+	setup: async (info) => {
 		audioMap = await util.getAudioLevelMap(info.videoPath)
 		audioMapL = audioMap.length - 1
 	},
