@@ -11,9 +11,9 @@ const fs = require('fs')
 const util = require('util')
 const execSync = util.promisify(require('child_process').exec)
 const getFileName = (p) => path.basename(p, path.extname(p))
-// In case audio level readouts throw an "-inf"
-// this will make it Javascript's negative infinity.
-const resolveNumber = (n) => (isNaN(Number(n)) ? Number.NEGATIVE_INFINITY : Number(n))
+// This addresses cases where unusable audio levels are returned.
+// Adapted from: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/isFinite
+const resolveNumber = (n, d = Number.NEGATIVE_INFINITY) => isFinite(n) ? Number(n) : d
 
 if (process.argv.length < 3 || process.argv.length > 4) return displayUsage()
 
@@ -65,9 +65,17 @@ async function getAudioLevelMap() {
 	const intermediateMap = rawAudioData.map(({ tags: { 'lavfi.astats.Overall.RMS_level': dBs } }, i) => ({ frame: Number(i + 1), dBs: resolveNumber(dBs) }))
 	// Obtain the highest audio level from the file.
 	const highest = intermediateMap.reduce((previous, current) => (previous.dBs > current.dBs ? previous : current))
-	//return intermediateMap.map(v => ({ percentMax: 1 - (highest.dBs / v.dBs), ...v })) // Shrink when louder.
-	// Amend percentages of the audio per frame vs. the highest in the file.
-	return intermediateMap.map((v) => ({ percentMax: highest.dBs / v.dBs, ...v }))
+	// Obtain the average audio level of the file.
+	const average = intermediateMap.reduce((previous, current) => previous + resolveNumber(current.dBs, 0), 0) / intermediateMap.length
+	// Calculate the deviation.
+	const deviation = Math.abs((highest.dBs - average) / 2)
+	// Calculate and amend percentage of decimals from across the video.
+	for (const frame of intermediateMap) {
+		const clamped = Math.max(Math.min(frame.dBs, average + deviation), average - deviation)
+		const v = Math.abs((clamped - average) / deviation) * 0.5
+		frame.percentMax = clamped > average ? (0.5 + v) : (0.5 - v)
+	}
+	return intermediateMap
 }
 
 async function main() {
@@ -129,49 +137,55 @@ async function main() {
 
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
-		switch (type.w) {
-			case 'Bounce':
-				height = index === 0 ? maxHeight : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
-				break
-			case 'Shutter':
-				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
-				break
-			case 'Sporadic':
-				width = index === 0 ? maxWidth : Math.floor(Math.random() * (maxWidth - delta)) + delta
-				height = index === 0 ? maxHeight : Math.floor(Math.random() * (maxHeight - delta)) + delta
-				break
-			case 'Bounce+Shutter':
-				height = index === 0 ? maxHeight : Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
-				width = index === 0 ? maxWidth : Math.floor(Math.abs(Math.sin((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
-				break
-			case 'Shrink':
-				height = Math.max(1, Math.floor(maxHeight - (index / tempFramesFrames.length) * maxHeight))
-				break
-			case 'Audio-Bounce':
-				// I put these lines in brackets so my IDE wouldn't complain that the percentMax constant was being declared twice, even though that would never happen in the code.
-				{
-					// Since audio frames don't match video frames, this calculates the percentage
-					// through the file a video frame is and grabs the closest audio frame's decibels.
-					const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
-					height = index === 0 ? maxHeight : Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
-					//width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
-				}
-				break
-			case 'Audio-Shutter':
-				{
-					const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
-					width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
-				}
-				break
+		// First frame remains full-resolution for the thumbnail.
+		if (index !== 0/* && index !== length - 1*/) {
+			switch (type.w) {
+				case 'Bounce':
+					height = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
+					break
+				case 'Shutter':
+					width = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
+					break
+				case 'Sporadic':
+					width = Math.floor(Math.random() * (maxWidth - delta)) + delta
+					height = Math.floor(Math.random() * (maxHeight - delta)) + delta
+					break
+				case 'Bounce+Shutter':
+					height = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
+					width = Math.floor(Math.abs(Math.sin((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
+					break
+				case 'Shrink':
+					height = Math.max(Math.floor(maxHeight - (index / length) * maxHeight), delta)
+					break
+				case 'Audio-Bounce':
+					// I put these lines in brackets so my IDE wouldn't complain that the percentMax constant was being declared twice, even though that would never happen in the code.
+					{
+						// Since audio frames don't match video frames, this calculates the percentage
+						// through the file a video frame is and grabs the closest audio frame's decibels.
+						const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
+						height = Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
+						//width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
+					}
+					break
+				case 'Audio-Shutter':
+					{
+						const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
+						width = Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
+					}
+					break
+			}
+		}
+		else {
+			height = maxHeight
+			width = maxWidth
 		}
 		// Creates the respective resized frame based on the above.
 		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
 		// Tracks the new file for concatenation later.
 		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
-		index++
 		process.stdout.clearLine()
 		process.stdout.cursorTo(0)
-		process.stdout.write(`Converting frames to webm (File ${index}/${length})...`)
+		process.stdout.write(`Converting frames to webm (File ${++index}/${length})...`)
 	}
 	process.stdout.write('\n')
 
