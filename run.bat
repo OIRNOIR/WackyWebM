@@ -13,7 +13,7 @@ REM Print Ascii Art
 for /f "delims=: tokens=*" %%A in ('findstr /b ::: "%~f0"') do @echo(%%A
 
 REM Ask for required inputs
-set /p "mode=Mode (Bounce, Shutter, Sporadic, Shrink, AudioBounce, AudioShutter, AudioBoth, Keyframes): "
+set /p "mode=Mode (Bounce, Shutter, Sporadic, Shrink, AudioBounce, AudioShutter, Keyframes): "
 set /p "file=File: "
 
 REM Run node commmand
