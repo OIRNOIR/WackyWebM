@@ -133,6 +133,7 @@ function displayUsage() {
 	const Usage =
 		'WackyWebM by OIRNOIR#0032\n' +
 		'Usage: node wackywebm.js [-o output_file_path] [optional_type] [-k keyframe_file] <input_file>\n' +
+		'\t-c,--compression: change compression level (higher is more compressed, 0 is lossless)\n' +
 		'\t-o,--output: change output file path (needs the desired output path as an argument)\n' +
 		'\t-k,--keyframes: only required with the type set to "Keyframes", sets the path to the keyframe file\n' +
 		'\t-b,--bitrate: change the bitrate used to encode the file (Default is 1 MB/s)\n' +
