@@ -20,7 +20,7 @@ for (const modeFile of fs.readdirSync(`${__dirname}/modes/`).filter(file => file
 }
 module.exports = { modes }
 
-const type = {w: undefined}
+const type = { w: undefined }
 let videoPath = undefined,
 	fileName = undefined,
 	filePath = undefined,
@@ -187,13 +187,14 @@ async function main() {
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
 	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${ourUtil.delta}px${type.w.includes('Bounce') || type.w.includes('Shutter') ? ` and bounce speed of ${tempo} per second.` : ''}.\nExtracting necessary input file info...`)
-	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -show_entries stream=r_frame_rate,width,height "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	// Deconstructor extracts these values and renames them.
 	let {
-		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate }],
+		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate, nb_read_frames: frameCount }],
 	} = JSON.parse(videoInfo.stdout.trim())
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
+	frameCount = Number(frameCount);
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
@@ -226,7 +227,7 @@ async function main() {
 	// Index tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
 	let index = 0,
 		lines = [],
-		length = tempFramesFrames.length
+		length = frameCount
 
 	if (/\+/.test(type.w)) {
 		type.w = type.w.split(/\+/g)
@@ -247,7 +248,7 @@ async function main() {
 		if (modes[modeToSetUp].setup.constructor.name === 'AsyncFunction') await modes[modeToSetUp].setup(setupInfo)
 		else modes[modeToSetUp].setup(setupInfo)
 
-	process.stdout.write(`Converting frames to webm (File ${index}/${tempFramesFrames.length})...`)
+	process.stdout.write(`Converting frames to webm (File ${index}/${frameCount})...`)
 
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
@@ -287,6 +288,7 @@ async function main() {
 		// Tracks the new file for concatenation later.
 		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
 		index++
+		if (index === frameCount) break;
 		process.stdout.clearLine()
 		process.stdout.cursorTo(0)
 		process.stdout.write(`Converting frames to webm (File ${index}/${length})...`)
