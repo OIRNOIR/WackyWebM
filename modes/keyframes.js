@@ -66,7 +66,7 @@ async function parseKeyFrameFile(keyFrameFile, framerate, originalWidth, origina
 		const width = infixToPostfix(line[1])
 		const height = infixToPostfix(line[2])
 
-		let interpolation = line[3]
+		let interpolation = line[3] ?? "linear"
 
 		return { time: parsedTime, width, height, interpolation }
 	})
