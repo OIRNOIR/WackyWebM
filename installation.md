@@ -18,6 +18,18 @@ Unzip the folder, move it to your downloads and then rename it to "ffmpeg".
   Once you've downloaded the WackyWebM folder by going to the GitHub repository and selecting the green "Code" button, then clicking "Download ZIP"
 
   Once the ZIP is fully installed, you need to extract the folder inside. After doing this, you are set. 
+  
+# How to Run
+  
+  `node wackywebm.js [mode] <file>`
+
+If you're on windows, you can simply double-click run.bat, as long as it's in the same folder as wackywebm.js.
+
+If you're on MacOS or Linux, you can run run.sh. You may have to give it permission to execute with chmod +x run.sh.
+
+You can also tweak the script to taste if you want to adjust how your file is generated.
+
+You can also change the bitrate of the output file by tweaking -b (Default is 1M, which means 1 MB/s. If the file is too large, consider lowering this value.)
 
 # Support
 
