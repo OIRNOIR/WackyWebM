@@ -65,6 +65,8 @@ Every line consists of 3 or 4 comma-seperated values:
  - next, the width, then the height at that keyframe (in pixels)
  - finally, the interpolation with which to advance towards the next keyframe (currently, only `linear` is supported.) If this is not given (and the line only has 3 fields), linear is assumed by default.  
 
+Lines that start either in a `#` character, or are entirely empty, are ignored and may be used as comments.
+
 If it isn't overwritten, an implicit keyframe at 0 frames into the video is added with linear interpolation and the video's original size.  
 To use this mode, add -k with the path to your csv file.
 

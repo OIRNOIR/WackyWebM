@@ -55,9 +55,9 @@ function infixToPostfix(expression) {
 let keyFrames = []
 async function parseKeyFrameFile(keyFrameFile, framerate, originalWidth, originalHeight) {
 	const content = (await fs.promises.readFile(keyFrameFile)).toString()
-	// CRLF is annoying.
-	const lines = content.split('\n').filter((s) => s !== '')
-	let data = lines.map((l) => l.replace(/\s/g, '').split(','))
+	// currently, whitespace except newlines *never* serves a syntactic function, so we can just remove it at the start.
+	const lines = content.split('\n').map(l => l.replace(/\s/g, '')).filter((s) => s !== '' && s[0] !== "#")
+	let data = lines.map((l) => l.split(','))
 	data = data.map((line) => {
 		let time = line[0].split(/[:.-]/)
 		// if there's only 1 "section" to the time, treat it as seconds. if there are 2, treat it as seconds:frames
