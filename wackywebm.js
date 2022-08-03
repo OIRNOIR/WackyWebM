@@ -263,17 +263,35 @@ Framerate is ${framerate} (${decimalFramerate}).`
 	const tempFramesFiles = fs.readdirSync(workLocations.tempFrames)
 	const tempFramesFrames = tempFramesFiles
 		.filter((f) => f.endsWith('png'))
-		.map((f) => ({ file: f, n: Number(getFileName(f)) }))
-		.sort((a, b) => a.n - b.n)
+		.map((f) => ({ file: f, frame: Number(getFileName(f)) }))
+		.sort((a, b) => a.frame - b.frame)
 	// Index tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
-	let index = 0,
-		lines = [],
-		width = maxWidth,
-		height = maxHeight,
-		length = tempFramesFrames.length
-	if (type.n === 99) {
-		type.audioMap = await getAudioLevelMap()
-		type.audioMapL = type.audioMap.length - 1
+	let tempFiles = []
+
+	// type.w's first character is uppercase, make it lower
+	type.w = type.w.toLowerCase()
+	if (/\+/.test(type.w)) {
+		type.w = type.w.split(/\+/g)
+	} else {
+		type.w = [type.w]
+	}
+
+	const setupInfo = {
+		videoPath,
+		keyFrameFile,
+		maxWidth,
+		maxHeight,
+		frameCount,
+		frameRate: decimalFramerate,
+	}
+
+	const baseInfoObject = {
+		maxWidth: maxWidth,
+		maxHeight: maxHeight,
+		frameCount: frameCount,
+		frameRate: decimalFramerate,
+		tempo: tempo,
+		angle: angle
 	}
 
 	// Setup modes
@@ -281,64 +299,17 @@ Framerate is ${framerate} (${decimalFramerate}).`
 		if (modes[modeToSetUp].setup.constructor.name === 'AsyncFunction') await modes[modeToSetUp].setup(setupInfo)
 		else modes[modeToSetUp].setup(setupInfo)
 
-	process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
+	process.stdout.write(`Converting frames to webm (File 1/${frameCount})...`)
 
 	const subProcess = []
-	for (const { file } of tempFramesFrames) {
+	for (const { file, frame } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
-		// First frame remains full-resolution for the thumbnail.
-		if (index !== 0/* && index !== length - 1*/) {
-			switch (type.w) {
-				case 'Bounce':
-					height = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
-					break
-				case 'Shutter':
-					width = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
-					break
-				case 'Sporadic':
-					width = Math.floor(Math.random() * (maxWidth - delta)) + delta
-					height = Math.floor(Math.random() * (maxHeight - delta)) + delta
-					break
-				case 'Bounce+Shutter':
-					height = Math.floor(Math.abs(Math.cos((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxHeight - delta))) + delta
-					width = Math.floor(Math.abs(Math.sin((index / (decimalFramerate / bouncesPerSecond)) * Math.PI) * (maxWidth - delta))) + delta
-					break
-				case 'Shrink':
-					height = Math.max(Math.floor(maxHeight - (index / length) * maxHeight), delta)
-					break
-				case 'Audio-Bounce':
-					// I put these lines in brackets so my IDE wouldn't complain that the percentMax constant was being declared twice, even though that would never happen in the code.
-					{
-						// Since audio frames don't match video frames, this calculates the percentage
-						// through the file a video frame is and grabs the closest audio frame's decibels.
-						const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
-						height = Math.max(Math.floor(Math.abs(maxHeight * percentMax)), delta)
-						//width = index === 0 ? maxWidth : Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
-					}
-					break
-				case 'Audio-Shutter':
-					{
-						const { percentMax } = type.audioMap[Math.max(Math.min(Math.floor((index / (length - 1)) * type.audioMapL), type.audioMapL), 0)]
-						width = Math.max(Math.floor(Math.abs(maxWidth * percentMax)), delta)
-					}
-					break
-			}
-		}
-		else {
-			height = maxHeight
-			width = maxWidth
-		}
 
-		const frameBounds = {}
-		for (const mode of type.w) {
-			const current = modes[mode].getFrameBounds(infoObject)
-			if (current.width !== undefined) frameBounds.width = current.width
-			if (current.height !== undefined) frameBounds.height = current.height
-			if (current.command !== undefined) frameBounds.command = current.command
-		}
+		const infoObject = Object.assign({ frame: frame - 1 }, baseInfoObject)
 
-		if (frameBounds.width === undefined) frameBounds.width = maxWidth
-		if (frameBounds.height === undefined) frameBounds.height = maxHeight
+		const frameBounds = { width: maxWidth, height: maxHeight }
+		for (const mode of type.w)
+			Object.assign(frameBounds, modes[mode].getFrameBounds(infoObject))
 
 		// Creates the respective resized frame based on the above.
 
@@ -358,7 +329,6 @@ Framerate is ${framerate} (${decimalFramerate}).`
 
 			// Tracks the new file for concatenation later.
 			tempFiles.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
-			frame++
 			process.stdout.clearLine()
 			process.stdout.cursorTo(0)
 			if (frame === frameCount) {
@@ -369,7 +339,7 @@ Framerate is ${framerate} (${decimalFramerate}).`
 				process.stdout.write(`Converting frames to webm (done)...`)
 				break
 			}
-			process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
+			process.stdout.write(`Converting frames to webm (File ${frame + 1}/${frameCount})...`)
 		} catch (e) {
 			ffmpegErrorHandler(e)
 			return
