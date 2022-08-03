@@ -15,8 +15,13 @@ const execSync = util.promisify(require('child_process').exec)
 const getFileName = (p) => path.basename(p, path.extname(p))
 
 const modes = {}
-for (const modeFile of fs.readdirSync(`${__dirname}/modes/`).filter(file => file.endsWith('.js'))) {
-	modes[modeFile.split('.')[0]] = require(`${__dirname}/modes/${modeFile}`)
+const modesDir = path.join(__dirname, 'modes')
+for (const modeFile of fs.readdirSync(modesDir).filter(file => file.endsWith('.js'))) {
+    try {
+        modes[modeFile.split('.')[0]] = require(path.join(modesDir, modeFile))
+    } catch (e) {
+        console.warn(`mode: ${modeFile.split('.')[0]} load failed`)
+    }
 }
 module.exports = { modes }
 
@@ -137,6 +142,8 @@ function parseCommandArguments() {
 	// check if value not given, use default
 	for (const i of argsConfig)
 		if (i.default && i.getValue() === undefined) i.default();
+
+    return true
 }
 
 // Build an index of temporary locations so they do not need to be repeatedly rebuilt.
@@ -176,9 +183,9 @@ async function main() {
 	// Verify the given path is accessible.
 	if (!videoPath || !fs.existsSync(videoPath)) {
 		if (videoPath)
-			console.error(`Keyframes file not found. "${videoPath}"`)
+			console.error(`Video file not found. "${videoPath}"`)
 		else
-			console.error(`Keyframes file not given.`)
+			console.error(`Video file not given.`)
 		return displayUsage()
 	}
 
@@ -280,7 +287,7 @@ async function main() {
 			if (frameBounds.command)
 				await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 ${frameBounds.command} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
 			else
-				await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
+				await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 		} catch (e) {
 			console.error(e.message.split('\n').filter(m => !m.startsWith('  configuration:')).join('\n'))
 			return
@@ -318,5 +325,5 @@ async function main() {
 	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
 
-void parseCommandArguments();
+if (parseCommandArguments() !== true) return;
 void main()
