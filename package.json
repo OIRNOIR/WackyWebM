@@ -10,7 +10,7 @@
 		"fmt:check": "prettier --check **/*.{md,css,js,json}",
 		"lint": "eslint **/*.js",
 		"lint:fix": "eslint **/*.js --fix",
-		"terminal_ui": "node blessed-ui.js"
+		"terminal_ui": "node terminal-ui.js"
 	},
 	"repository": {
 		"type": "git",
@@ -23,8 +23,8 @@
 	},
 	"homepage": "https://github.com/OIRNOIR/WebM-Maker-Thing-Idk#readme",
 	"devDependencies": {
-		"blessed": "^0.1.81",
 		"eslint": "^8.20.0",
-		"prettier": "2.7.1"
+		"prettier": "2.7.1",
+		"terminal-kit": "^2.5.1"
 	}
 }

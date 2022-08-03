@@ -23,12 +23,6 @@ for (const modeFile of fs.readdirSync(modesDir).filter((file) => file.endsWith('
 		console.warn(`mode: ${modeFile.split('.')[0]} load failed`)
 	}
 }
-module.exports = { modes }
-
-// recommended way to check if this file is the entry point, as per
-// https://nodejs.org/api/deprecations.html#DEP0144
-if (require.main !== module)
-	return;
 
 const type = { w: undefined }
 let videoPath = undefined,
@@ -217,6 +211,15 @@ function ffmpegErrorHandler(e) {
 	)
 }
 
+const DONE_FRAMES = 0
+
+let progressListener = () => {
+}
+
+function setProgressListener(l) {
+	progressListener = l
+}
+
 async function main() {
 	// Verify the given path is accessible.
 	if (!videoPath || !fs.existsSync(videoPath)) {
@@ -367,6 +370,8 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 					const doneFrames = processToAwait.assignedFrames
 					await processToAwait
 					totalFramesDone += doneFrames
+
+					progressListener(DONE_FRAMES, { done: totalFramesDone, total: frameCount })
 				}
 
 				const newProcess = execSync(command, { maxBuffer: 1024 * 1000 * 8 })
@@ -427,6 +432,12 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 	console.log('Done!\nRemoving temporary files...')
 	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
+
+module.exports = { modes, main, setProgressListener, event_types: { DONE_FRAMES } }
+
+// recommended way to check if this file is the entry point, as per
+// https://nodejs.org/api/deprecations.html#DEP0144
+if (require.main !== module) return
 
 if (parseCommandArguments() !== true) return
 void main()
