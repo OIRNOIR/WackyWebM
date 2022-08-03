@@ -13,9 +13,6 @@ const util = require('util')
 const ourUtil = require('./util')
 const execSync = util.promisify(require('child_process').exec)
 const getFileName = (p) => path.basename(p, path.extname(p))
-// This addresses cases where unusable audio levels are returned.
-// Adapted from: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/isFinite
-const resolveNumber = (n, d = Number.NEGATIVE_INFINITY) => isFinite(n) ? Number(n) : d
 
 const modes = {}
 const modesDir = path.join(__dirname, 'modes')
@@ -190,27 +187,8 @@ function displayUsage() {
 	console.log(Usage)
 }
 
-// Obtains a map of the audio levels in decibels from the input file.
-async function getAudioLevelMap() {
-	// The method requires escaping the file path.
-	// Modify this regular expression if more are necessary.
-	const escapePathRegex = /([\\/:])/g
-	const { frames: rawAudioData } = JSON.parse((await execSync(`ffprobe -f lavfi -i "amovie='${videoPath.replace(escapePathRegex, '\\$1')}',astats=metadata=1:reset=1" -show_entries "frame=pkt_pts_time:frame_tags=lavfi.astats.Overall.RMS_level" -of json`)).stdout)
-	// Remap to simplify the format.
-	const intermediateMap = rawAudioData.map(({ tags: { "lavfi.astats.Overall.RMS_level": dBs } }, i) => ({ frame: Number(i + 1), dBs: resolveNumber(dBs) }))
-	// Obtain the highest audio level from the file.
-	const highest = intermediateMap.reduce((previous, current) => (previous.dBs > current.dBs ? previous : current))
-	// Obtain the average audio level of the file.
-	const average = intermediateMap.reduce((previous, current) => previous + resolveNumber(current.dBs, 0), 0) / intermediateMap.length
-	// Calculate the deviation.
-	const deviation = Math.abs((highest.dBs - average) / 2)
-	// Calculate and amend percentage of decimals from across the video.
-	for (const frame of intermediateMap) {
-		const clamped = Math.max(Math.min(frame.dBs, average + deviation), average - deviation)
-		const v = Math.abs((clamped - average) / deviation) * 0.5
-		frame.percentMax = clamped > average ? (0.5 + v) : (0.5 - v)
-	}
-	return intermediateMap
+function ffmpegErrorHandler(e) {
+	console.error(e.message.split('\n').filter(m => !m.startsWith('  configuration:')).join('\n'))
 }
 
 async function main() {
@@ -363,12 +341,39 @@ Framerate is ${framerate} (${decimalFramerate}).`
 		if (frameBounds.height === undefined) frameBounds.height = maxHeight
 
 		// Creates the respective resized frame based on the above.
-		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v 1M -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, {maxBuffer: 1024 * 1000 * 8 /* 8mb */})
-		// Tracks the new file for concatenation later.
-		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
-		process.stdout.clearLine()
-		process.stdout.cursorTo(0)
-		process.stdout.write(`Converting frames to webm (File ${++index}/${length})...`)
+
+		try {
+			// The part of command can be change
+			const command = frameBounds.command
+				? frameBounds.command
+				: `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`
+			const outputFileName = path.join(workLocations.tempResizedFrames, file + '.webm')
+
+			// Wait if subProcess is full
+			if (subProcess.length >= maxThread)
+				await subProcess.shift()
+			// Add to subProcess
+			subProcess.push(execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 ${command} -r ${framerate} -threads 1 -f webm "${outputFileName}"`,
+				{ maxBuffer: 1024 * 1000 * 8 /* 8mb */ }))
+
+			// Tracks the new file for concatenation later.
+			tempFiles.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
+			frame++
+			process.stdout.clearLine()
+			process.stdout.cursorTo(0)
+			if (frame === frameCount) {
+				for (const process of subProcess)
+					await process
+				// Clean up
+				subProcess.length = 0
+				process.stdout.write(`Converting frames to webm (done)...`)
+				break
+			}
+			process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
+		} catch (e) {
+			ffmpegErrorHandler(e)
+			return
+		}
 	}
 	process.stdout.write('\n')
 
