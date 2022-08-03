@@ -21,5 +21,14 @@ jobs:
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           add_timestamp: true
-          commit_message: "Update scripts with modes from the file"
+          commit_message: "Update scripts with the modes from the /modes directory"
           force: false
+      - name: Create pull request
+        uses: devops-infra/action-pull-request@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          body: "**Automated pull request**<br><br>Replaced foo/bar"
+          title: ${{ github.event.commits[0].message }}
+          label: automation
+          reviewer: thewilloftheshadow
+          
