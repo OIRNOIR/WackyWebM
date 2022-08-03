@@ -22,3 +22,28 @@ Once the ZIP is fully installed, you need to extract the folder inside. After do
 # Support
 
 If you encounter bugs, issues, or have recommendations, feel free to join the Discord [here.](https://discord.gg/TmyJfq49AP)
+
+# Modes
+`Bounce` (Default): The video bounces up and down.
+
+`Shutter`: The video bounces left to right.
+
+`Sporadic`: The video glitches and wobbles randomly.
+
+`Shrink`: The video shrinks vertically until it's just one pixel thin.
+
+`AudioBounce`: The video's vertical height changes relative to the current audio level verses the highest within the video.
+
+`AudioShutter`: The video's horizontal width changes relative to the current audio level verses the highest within the video.
+
+`Keyframes`: The video's height and width change based on a number of keyframes outlined in the file given as an argument. The format is as follows:
+Every line consists of 4 comma-seperated values:
+first, the time in the video of the keyframe; either one integer representing seconds, or two, seperated by any one of the characters ., : or -, where the first still represents seconds, and the second represents frames.
+next, the width, then the height at that keyframe (in pixels)
+finally, the interpolation with which to advance towards the next keyframe (currently, only linear is supported.)
+If it isn't overwritten, an implicit keyframe at 0 frames into the video is added with linear interpolation and the video's original size.
+To use this mode, add -k with the path to your csv file.
+
+`Jumpscare`: The video shrinks down small, then gets big at the specified frame.
+
+Additionally, any 2 modes can be combined using a + symbol, like Bounce+Shutter. If one only specifies width, and one only specifies height, then those respective values are used. If there is a conflict, the value from the latter of the 2 modes is used (so Shrink+Bounce would result in the same effect as just Bounce)
