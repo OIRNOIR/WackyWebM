@@ -315,6 +315,9 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		sameSizeCount = 0
 	let totalFramesDone = 0
 
+	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
+	const maxSegmentLength = Math.floor(frameCount / maxThread);
+
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 
@@ -344,7 +347,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 			lastHeight = frameBounds.height
 		}
 
-		if (Math.abs(frameBounds.width - lastWidth) + Math.abs(frameBounds.height - lastHeight) > compressionLevel || frame === frameCount - 1) {
+		if (Math.abs(frameBounds.width - lastWidth) + Math.abs(frameBounds.height - lastHeight) > compressionLevel || frame === frameCount - 1 || sameSizeCount > maxSegmentLength) {
 			// Creates the respective resized frame based on the above.
 			try {
 				// only make new partial webm if frame size changed.
