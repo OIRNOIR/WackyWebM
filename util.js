@@ -32,5 +32,4 @@ const orgConsoleError = console.error
 console.warn = (m) => orgConsoleWarn(WARN, m)
 console.error = (m) => orgConsoleError(ERROR, m)
 
-
-module.exports = {delta, getAudioLevelMap}
+module.exports = { delta, getAudioLevelMap }
