@@ -340,7 +340,8 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		if (frameBounds.height === undefined) frameBounds.height = maxHeight
 
 		if (frame === 0) {
-			[lastWidth, lastHeight] = [frameBounds.width, frameBounds.height]
+			lastWidth = frameBounds.width
+			lastHeight = frameBounds.height
 		}
 
 		if (Math.abs(frameBounds.width - lastWidth) + Math.abs(frameBounds.height - lastHeight) > compressionLevel || frame === frameCount - 1) {
