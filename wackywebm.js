@@ -34,7 +34,8 @@ let videoPath = undefined,
 	bitrate = undefined,
 	maxThread = undefined,
 	tempo = undefined,
-	angle = undefined
+	angle = undefined,
+	compressionLevel = undefined;
 
 const argsConfig = [
 	{
@@ -43,40 +44,54 @@ const argsConfig = [
 		call: () => {
 			displayUsage()
 			process.exit(1)
-		}
+		},
+		description: "displays this syntax guide"
 	},
 	{
 		keys: ['-k', '--keyframes'],
-		call: (val) => keyFrameFile = val, getValue: () => keyFrameFile
+		call: (val) => keyFrameFile = val, getValue: () => keyFrameFile,
+		description: "only used with 'Keyframes' mode; sets the keyframe file to use"
 	},
 	{
 		keys: ['-b', '--bitrate'],
 		// Default bitrate: 1M
 		default: () => bitrate = '1M',
-		call: (val) => bitrate = val, getValue: () => bitrate
+		call: (val) => bitrate = val, getValue: () => bitrate,
+		description: "sets the maximum bitrate of the video. Lowering this might reduce file size."
 	},
 	{
 		keys: ['--thread'],
 		default: () => maxThread = 2,
-		call: (val) => maxThread = parseInt(val), getValue: () => maxThread
+		call: (val) => maxThread = parseInt(val), getValue: () => maxThread,
+		description: "sets maximum allowed number of threads to use"
 	},
 	{
 		keys: ['-t', '--tempo'],
 		default: () => tempo = 2,
-		call: (val) => tempo = val, getValue: () => tempo
+		call: (val) => tempo = val, getValue: () => tempo,
+		description: "regulates speed of bouncing"
 	},
 	{
 		keys: ['-a', '--angle'],
 		default: () => angle = 360,
-		call: (val) => angle = parseInt(val), getValue: () => angle
+		call: (val) => angle = parseInt(val), getValue: () => angle,
+		description: "angle to rotate per second when using 'Rotate' mode"
 	},
 	{
 		keys: ['-o', '--output'],
 		// no "-o" argument, use default path in the format "chungus_Bounce.webm"
 		default: () => outputPath = path.join(filePath, `${fileName}_${type.w.replace(/\+/g, '_')}.webm`),
-		call: (val) => outputPath = val, getValue: () => outputPath
+		call: (val) => outputPath = val, getValue: () => outputPath,
+		description: "sets output file."
 	},
-]
+	{
+		keys: ['-c', '--compression'],
+		default: () => compressionLevel = 0,
+		call: (c) => compressionLevel = c,
+		getValue: () => compressionLevel,
+		description: "sets compression level (higher value means more compression)"
+	}
+];
 
 function parseCommandArguments() {
 	for (let i = 2; i < process.argv.length; i++) {
@@ -169,15 +184,12 @@ function buildLocations() {
 }
 
 function displayUsage() {
+	// for appropriately indenting all the argument aliases so they line up nicely
+	const longestKeys = argsConfig.map(a => a.keys.join(',')).sort((a, b) => b.length - a.length)[0].length;
 	const Usage =
 		'WackyWebM by OIRNOIR#0032\n' +
 		'Usage: node wackywebm.js [-o output_file_path] [optional_type] [-k keyframe_file] <input_file>\n' +
-		'\t-o,--output: change output file path (needs the desired output path as an argument)\n' +
-		'\t-k,--keyframes: only required with the type set to "Keyframes", sets the path to the keyframe file\n' +
-		'\t-b,--bitrate: change the bitrate used to encode the file (Default is 1 MB/s)\n' +
-		'\t-t,--tempo: change the bounces per second on "Bounce" and "Shutter" modes\n' +
-		'\t-a,--angle: change the angle rotate per second on "Angle" modes, can be negative\n' +
-		'\t--thread: max thread use, default: 2\n' +
+		argsConfig.map(arg => `\t${(arg.keys.join(',') + ':').padEnd(longestKeys+1, ' ')}  ${arg.description}`).join('\n') +
 		'\nRecognized Modes:\n' +
 		Object.keys(modes)
 			.map((m) => `\t${m}`)
