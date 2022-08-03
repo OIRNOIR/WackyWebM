@@ -13,12 +13,6 @@ const util = require('util')
 const ourUtil = require('./util')
 const execSync = util.promisify(require('child_process').exec)
 const getFileName = (p) => path.basename(p, path.extname(p))
-<<<<<<< HEAD
-// This addresses cases where unusable audio levels are returned.
-// Adapted from: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/isFinite
-const resolveNumber = (n, d = Number.NEGATIVE_INFINITY) => isFinite(n) ? Number(n) : d
-=======
->>>>>>> eff9f0ad9e54212769f89d1403d4012683fffafe
 
 const modes = {}
 const modesDir = path.join(__dirname, 'modes')
@@ -193,145 +187,8 @@ function displayUsage() {
 	console.log(Usage)
 }
 
-<<<<<<< HEAD
-function infixToPostfix(expression) {
-	let outputQueue = []
-	const operatorStack = []
-	const operators = {
-		'/': {
-			precedence: 2,
-			associativity: 'Left',
-		},
-		'*': {
-			precedence: 2,
-			associativity: 'Left',
-		},
-		'+': {
-			precedence: 1,
-			associativity: 'Left',
-		},
-		'-': {
-			precedence: 1,
-			associativity: 'Left',
-		},
-	}
-	expression = expression.split(/([+\-*/()])/).filter((s) => s !== '')
-	for (let i = 0; i < expression.length; i++) {
-		const token = expression[i]
-		if (/^\d+$/.test(token)) {
-			outputQueue.push(parseInt(token))
-		} else if ('*/+-'.indexOf(token) !== -1) {
-			const o1 = token
-			const o2 = operatorStack[operatorStack.length - 1]
-			while ('*/+-'.indexOf(o2) !== -1 && ((operators[o1].associativity === 'Left' && operators[o1].precedence <= operators[o2].precedence) || (operators[o1].associativity === 'Right' && operators[o1].precedence < operators[o2].precedence))) {
-				outputQueue.push(operatorStack.pop())
-			}
-			operatorStack.push(o1)
-		} else if (token === '(') {
-			operatorStack.push(token)
-		} else if (token === ')') {
-			while (operatorStack[operatorStack.length - 1] !== '(') {
-				outputQueue.push(operatorStack.pop())
-			}
-			operatorStack.pop()
-		} else {
-			// variable name? treat like integer literal in this step
-			outputQueue.push(token)
-		}
-	}
-	while (operatorStack.length > 0) {
-		outputQueue.push(operatorStack.pop())
-	}
-	return outputQueue
-}
-
-let keyFrames = []
-async function parseKeyFrameFile(framerate, originalWidth, originalHeight) {
-	const content = (await fs.promises.readFile(keyFrameFile)).toString()
-	// CRLF is annoying.
-	const lines = content.split('\n').filter((s) => s !== '')
-	let data = lines.map((l) => l.replace(/\s/g, '').split(','))
-	data = data.map((line) => {
-		let time = line[0].split(/[:.-]/)
-		// if there's only 1 "section" to the time, treat it as seconds. if there are 2, treat it as seconds:frames
-		let parsedTime = Math.floor(parseInt(time[0]) * framerate) + (time.length === 1 ? 0 : parseInt(time[1]))
-
-		const width = infixToPostfix(line[1])
-		const height = infixToPostfix(line[2])
-
-		let interpolation = line[3]
-
-		return { time: parsedTime, width, height, interpolation }
-	})
-	data = data.sort((a, b) => a.time - b.time)
-	if (data[0].time !== 0) {
-		data = [{ time: 0, width: [originalWidth], height: [originalHeight], interpolation: 'linear' }, ...data]
-	}
-
-	// evaluate expressions for width/height
-	// can't use map here, since we access previous elements from within the later ones.
-	for (let dataIndex = 0; dataIndex < data.length; dataIndex++) {
-		// if false is passed as evaluatingHeight, we are evaluating a width.
-		const evaluatePostfix = (postfix, evaluatingHeight) => {
-			const queue = []
-			for (let i = 0; i < postfix.length; i++) {
-				if (/^\d+$/.test(postfix[i])) queue.push(postfix[i])
-				else if (postfix[i] === '+') queue.push(queue.pop() + queue.pop())
-				else if (postfix[i] === '-')
-					// slightly awkward way of subtracting, since we want to subtract the 2nd element from the first, not the other way.
-					queue.push(-queue.pop() + queue.pop())
-				else if (postfix[i] === '*') queue.push(queue.pop() * queue.pop())
-				else if (postfix[i] === '/') {
-					const b = queue.pop()
-					queue.push(queue.pop() / b)
-				} else if (postfix[i].toLowerCase() === 'lastWidth') queue.push(data[dataIndex - 1].width)
-				else if (postfix[i].toLowerCase() === 'lastHeight') queue.push(data[dataIndex - 1].height)
-				else if (postfix[i].toLowerCase() === 'last') queue.push(data[dataIndex - 1][evaluatingHeight ? 'height' : 'width'])
-				else if (postfix[i].toLowerCase() === 'original') queue.push(evaluatingHeight ? originalHeight : originalWidth)
-			}
-
-			return Math.floor(queue[0])
-		}
-
-		data[dataIndex].width = evaluatePostfix(data[dataIndex].width, false)
-		data[dataIndex].height = evaluatePostfix(data[dataIndex].height, true)
-	}
-
-	keyFrames = data
-}
-// various kinds of interpolation go here.
-function lerp(a, b, t) {
-	// convert the inputs to floats for accuracy, then convert the result back to an integer at the end
-	a = a + 0.0
-	b = b + 0.0
-	return Math.floor(a + t * (b - a))
-}
-
-// Obtains a map of the audio levels in decibels from the input file.
-async function getAudioLevelMap() {
-	// The method requires escaping the file path.
-	// Modify this regular expression if more are necessary.
-	const escapePathRegex = /([\\/:])/g
-	const { frames: rawAudioData } = JSON.parse((await execSync(`ffprobe -f lavfi -i "amovie='${videoPath.replace(escapePathRegex, '\\$1')}',astats=metadata=1:reset=1" -show_entries "frame=pkt_pts_time:frame_tags=lavfi.astats.Overall.RMS_level" -of json`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })).stdout)
-	// Remap to simplify the format.
-	const intermediateMap = rawAudioData.map(({ tags: { 'lavfi.astats.Overall.RMS_level': dBs } }, i) => ({ frame: Number(i + 1), dBs: resolveNumber(dBs) }))
-	// Obtain the highest audio level from the file.
-	const highest = intermediateMap.reduce((previous, current) => (previous.dBs > current.dBs ? previous : current))
-	// Obtain the average audio level of the file.
-	const average = intermediateMap.reduce((previous, current) => previous + resolveNumber(current.dBs, 0), 0) / intermediateMap.length
-	// Calculate the deviation.
-	const deviation = Math.abs((highest.dBs - average) / 2)
-	// Calculate and amend percentage of decimals from across the video.
-	for (const frame of intermediateMap) {
-		const clamped = Math.max(Math.min(frame.dBs, average + deviation), average - deviation)
-		const v = Math.abs((clamped - average) / deviation) * 0.5
-		frame.percentMax = clamped > average ? (0.5 + v) : (0.5 - v)
-	}
-	return intermediateMap
-=======
 function ffmpegErrorHandler(e) {
 	console.error(e.message.split('\n').filter(m => !m.startsWith('  configuration:')).join('\n'))
->>>>>>> eff9f0ad9e54212769f89d1403d4012683fffafe
 }
 
 async function main() {
@@ -462,14 +319,6 @@ Framerate is ${framerate} (${decimalFramerate}).`
 		if (frameBounds.height === undefined) frameBounds.height = maxHeight
 
 		// Creates the respective resized frame based on the above.
-<<<<<<< HEAD
-		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${width}x${height} -aspect ${width}:${height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
-		// Tracks the new file for concatenation later.
-		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
-		process.stdout.clearLine()
-		process.stdout.cursorTo(0)
-		process.stdout.write(`Converting frames to webm (File ${++index}/${length})...`)
-=======
 
 		try {
 			// The part of command can be change
@@ -503,7 +352,6 @@ Framerate is ${framerate} (${decimalFramerate}).`
 			ffmpegErrorHandler(e)
 			return
 		}
->>>>>>> eff9f0ad9e54212769f89d1403d4012683fffafe
 	}
 	process.stdout.write('\n')
 
