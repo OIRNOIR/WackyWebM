@@ -33,9 +33,9 @@ Unzip the folder, move it to your downloads and then rename it to "ffmpeg".
 
   Once the ZIP is fully installed, you need to extract the folder inside. After doing this, you are set. 
   
-  Use `node wackywebm.js [mode] <file>` to use WackyWebM without running the run.bat.
+  Use `node wackywebm.js [mode] <file>` to use WackyWebM without running the create.exe.
 
-If you're on windows, you can simply double-click run.bat, as long as it's in the same folder as wackywebm.js.
+If you're on windows, you can simply double-click create.exe, as long as it's in the same folder as wackywebm.js.
 
 If you're on MacOS or Linux, you can run run.sh. You may have to give it permission to execute with chmod +x run.sh.
 

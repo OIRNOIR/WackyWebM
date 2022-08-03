@@ -337,8 +337,6 @@ Framerate is ${framerate} (${decimalFramerate}).`
 			// Tracks the new file for concatenation later.
 			tempFiles.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
 			frame++
-			process.stdout.clearLine()
-			process.stdout.cursorTo(0)
 			if (frame === frameCount) {
 				for (const process of subProcess)
 					await process
@@ -347,7 +345,7 @@ Framerate is ${framerate} (${decimalFramerate}).`
 				process.stdout.write(`Converting frames to webm (done)...`)
 				break
 			}
-			process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
+			process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...\n`)
 		} catch (e) {
 			ffmpegErrorHandler(e)
 			return
