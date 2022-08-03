@@ -11,7 +11,7 @@ echo "
 "
 
 # Ask for required inputs
-read -p "Mode (audiobounce, audioshutter, bounce, jumpscare, keyframes, shrink, shutter, sporadic): " mode
+read -p "Mode (audiobounce, audioshutter, bounce, jumpscare, keyframes, rotate, shrink, shutter, sporadic): " mode
 read -p "File: " file
 
 # Run node commmand
