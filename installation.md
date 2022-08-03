@@ -21,8 +21,7 @@ Unzip the folder, move it to your downloads and then rename it to "ffmpeg".
 
 # Support
 
-  If you encounter bugs, issues, or have recommendations, feel free to join the Discord [here.](https://discord.gg/TmyJfq49AP)
-https://discord.gg/EdrqJ6AMKF
+  If you encounter bugs, issues, or have recommendations, feel free to join the Discord [here.](https://discord.gg/TmyJfq49AP)[![Discord Invite Widget](https://invidget.switchblade.xyz/EdrqJ6AMKF)](https://discord.gg/EdrqJ6AMKF)
 
 # Modes
 `Bounce` (Default): The video bounces up and down.
