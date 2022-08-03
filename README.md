@@ -1,4 +1,6 @@
-  To begin installation, you must install NodeJS first. You can find the NodeJS download [here.](https://nodejs.org/en/)
+ # NodeJS
+ 
+ To begin installation, you must install NodeJS first. You can find the NodeJS download [here.](https://nodejs.org/en/)
 
   After that, if prompted to restart, it is recommended to do so.
 
@@ -31,10 +33,6 @@ You can also tweak the script to taste if you want to adjust how your file is ge
 
 You can also change the bitrate of the output file by tweaking -b (Default is 1M, which means 1 MB/s. If the file is too large, consider lowering this value.)
 
-# Support
-
-  If you encounter bugs, issues, or have recommendations, feel free to join the Discord [here.](https://discord.gg/TmyJfq49AP)[![Discord Invite Widget](https://invidget.switchblade.xyz/EdrqJ6AMKF)](https://discord.gg/EdrqJ6AMKF)
-
 # Modes
 `Bounce` (Default): The video bounces up and down.
 
@@ -59,3 +57,8 @@ If it isn't overwritten, an implicit keyframe at 0 frames into the video is adde
 To use this mode, add -k with the path to your csv file.
 
   Additionally, any 2 modes can be combined using a + symbol, like Bounce+Shutter. If one only specifies width, and one only specifies height, then those respective values are used. If there is a conflict, the value from the latter of the 2 modes is used (so Shrink+Bounce would result in the same effect as just Bounce)
+
+
+# Support
+
+  If you encounter bugs, issues, or have recommendations, feel free to join the Discord [here.](https://discord.gg/TmyJfq49AP)[![Discord Invite Widget](https://invidget.switchblade.xyz/EdrqJ6AMKF)](https://discord.gg/EdrqJ6AMKF)
