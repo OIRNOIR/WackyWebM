@@ -27,7 +27,7 @@ Dependencies
 	
 ## Text Guide
 
-1. Once you've [downloaded] (https://github.com/OIRNOIR/WebM-Maker-Thing-Idk/archive/refs/heads/main.zip) the WackyWebM Files extract them to a place of your choice.
+1. Once you've [downloaded](https://github.com/OIRNOIR/WebM-Maker-Thing-Idk/archive/refs/heads/main.zip) the WackyWebM Files extract them to a place of your choice.
     
 2. Open cmd in the folder and use `node wackywebm.js [mode] <file>` 
     ![Command](https://raw.githubusercontent.com/MidnightAnnie/WebM-Maker-Thing-Idk/main/Instructions/Images/WindowsTerminal_BZIkkLMuJI.png)
