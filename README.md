@@ -1,3 +1,9 @@
+# WackyWebM
+
+WackyWebM is a tool that allows you to create WebM video files with changing aspect ratios.
+
+If you're having issues, want to share your custom modes, or learn from the community join the Discord at the bottom of this readme.
+
 # Dependencies
 
 NodeJS
