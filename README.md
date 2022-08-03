@@ -6,8 +6,8 @@ If you're having issues, want to share your custom modes, or learn from the comm
 
 ## Dependencies
 
- * NodeJS
- * FFmpeg
+ * [NodeJS](https://nodejs.org)
+ * [FFmpeg](https://ffmpeg.org)
  * FFprobe
 
 ### NodeJS
