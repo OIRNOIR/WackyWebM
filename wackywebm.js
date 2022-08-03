@@ -15,103 +15,142 @@ const execSync = util.promisify(require('child_process').exec)
 const getFileName = (p) => path.basename(p, path.extname(p))
 
 const modes = {}
-for (const modeFile of fs.readdirSync(`${__dirname}/modes/`).filter(file => file.endsWith('.js'))) {
-	modes[modeFile.split('.')[0]] = require(`${__dirname}/modes/${modeFile}`)
+const modesDir = path.join(__dirname, 'modes')
+for (const modeFile of fs.readdirSync(modesDir).filter(file => file.endsWith('.js'))) {
+	try {
+		modes[modeFile.split('.')[0]] = require(path.join(modesDir, modeFile))
+	} catch (e) {
+		console.warn(`mode: ${modeFile.split('.')[0]} load failed`)
+	}
 }
 module.exports = { modes }
 
 const type = { w: undefined }
-let videoPath = '',
+let videoPath = undefined,
+	fileName = undefined,
+	filePath = undefined,
 	outputPath = undefined,
 	keyFrameFile = undefined,
 	bitrate = undefined,
-	tempo = undefined
+	maxThread = undefined,
+	tempo = undefined,
+	angle = undefined
 
-for (let i = 2; i < process.argv.length; i++) {
-	const arg = process.argv[i]
-
-	// named arguments
-	//
-	// output file
-	if (arg === '-o' || arg === '--output') {
-		// no argument after "-o" 			  || not the first "-o" argument
-		if (i === process.argv.length - 1 || outputPath !== undefined) {
-			return displayUsage()
+const argsConfig = [
+	{
+		keys: ['-h', '--help'],
+		noValueAfter: true,
+		call: () => {
+			displayUsage()
+			process.exit(1)
 		}
-		// consume the next argument, so we dont iterate over it again
-		outputPath = process.argv[++i]
-		continue
-	}
-	// keyframe file
-	if (arg === '-k' || arg === '--keyframes') {
-		// no argument after "-k" 			  || not the first "-k" argument
-		if (i === process.argv.length - 1 || keyFrameFile !== undefined) {
-			return displayUsage()
+	},
+	{
+		keys: ['-k', '--keyframes'],
+		call: (val) => keyFrameFile = val, getValue: () => keyFrameFile
+	},
+	{
+		keys: ['-b', '--bitrate'],
+		// Default bitrate: 1M
+		default: () => bitrate = '1M',
+		call: (val) => bitrate = val, getValue: () => bitrate
+	},
+	{
+		keys: ['--thread'],
+		default: () => maxThread = 2,
+		call: (val) => maxThread = parseInt(val), getValue: () => maxThread
+	},
+	{
+		keys: ['-t', '--tempo'],
+		default: () => tempo = 2,
+		call: (val) => tempo = val, getValue: () => tempo
+	},
+	{
+		keys: ['-a', '--angle'],
+		default: () => angle = 360,
+		call: (val) => angle = parseInt(val), getValue: () => angle
+	},
+	{
+		keys: ['-o', '--output'],
+		// no "-o" argument, use default path in the format "chungus_Bounce.webm"
+		default: () => outputPath = path.join(filePath, `${fileName}_${type.w.replace(/\+/g, '_')}.webm`),
+		call: (val) => outputPath = val, getValue: () => outputPath
+	},
+]
+
+function parseCommandArguments() {
+	for (let i = 2; i < process.argv.length; i++) {
+		const arg = process.argv[i]
+
+		// named arguments
+		if (arg.startsWith('-')) {
+			let argFound = false
+			for (const j of argsConfig) {
+				if (j.keys.includes(arg)) {
+					// need vale but no argument after || set argument value twice
+					if (!j.noValueAfter && i === process.argv.length - 1 || (j.getValue && j.getValue() !== undefined)) {
+						console.error(`Illegal argument: ${arg}`)
+						return displayUsage()
+					}
+					j.call(++i === process.argv.length ? null : process.argv[i])
+					argFound = true
+					break
+				}
+			}
+			if (!argFound) {
+				console.error(`Argument "${arg}" cant be set`)
+				return displayUsage()
+			}
+			continue
 		}
-		keyFrameFile = process.argv[++i]
-		continue
-	}
-	// customizable bitrate
-	if (arg === '-b' || arg === '--bitrate') {
-		// no argument after "-b" 			  || not the first "-b" argument
-		if (i === process.argv.length - 1 || bitrate !== undefined) {
-			return displayUsage()
+		// positional arguments
+		//
+		// basically, first positional argument is inputType, second one
+		// (and every one after that) is video path, except when the first one doesn't
+		// match any of the input types, in which case its also part of the path.
+		// split by + before trying to match to modes in order to support using multiple modes.
+		if (type.w === undefined &&
+			arg.split(/\+/g).every((x) =>
+				Object.keys(modes)
+					.map((m) => m.toLowerCase())
+					.includes(x.toLowerCase())
+			)
+		) {
+			type.w = arg.toLowerCase()
+		} else {
+			if (videoPath) videoPath += ' ' + arg
+			else videoPath = arg
 		}
-		bitrate = process.argv[++i]
-		continue
-	}
-	// customizable bouncesPerSecond (hereinafter known as Tempo)
-	if (arg === '-t' || arg === '--tempo') {
-		// no argument after "-t" 			  || not the first "-t" argument
-		if (i === process.argv.length - 1 || tempo !== undefined) {
-			return displayUsage()
-		}
-		tempo = process.argv[++i]
-		continue
 	}
 
-	// positional arguments
-	//
-	// basically, first positional argument is inputType, second one
-	// (and every one after that) is video path, except when the first one doesn't
-	// match any of the input types, in which case its also part of the path.
-	// split by + before trying to match to modes in order to support using multiple modes.
-	if (
-		type.w === undefined &&
-		arg.split(/\+/g).every((x) =>
-			Object.keys(modes)
-				.map((m) => m.toLowerCase())
-				.includes(x.toLowerCase())
-		)
-	) {
-		type.w = arg.toLowerCase()
-	} else {
-		if (type.w === undefined) type.w = 'Bounce'
-		videoPath += arg + ' '
+	// not a single positional argument, we need at least 1
+	if (type.w === undefined) {
+		type.w = 'bounce'
+		console.warn(`Mode not selected, using default "${type.w}".`)
 	}
-}
+	// Keyframes mode selected without providing keyframe file
+	if (type.w === 'keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
+		if (keyFrameFile)
+			console.error(`Keyframes file not found. "${keyFrameFile}"`)
+		else
+			console.error(`Keyframes file not given.`)
+		return displayUsage()
+	}
 
-// not a single positional argument; we need at least 1
-if (type.w === undefined) return displayUsage()
-
-// Keyframes mode selected without providing keyframe file
-if (type.w === 'Keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) return displayUsage()
-
-// got 1 positional argument, which was the mode to use - no file path!
-if (videoPath === '') return displayUsage()
-
-// we always append 1 extra space, so remove the last one.
-videoPath = videoPath.substring(0, videoPath.length - 1)
-
-// Default bitrate: 1M
-if (bitrate === undefined) bitrate = '1M'
-if (tempo === undefined) tempo = 2
-
-const fileName = getFileName(videoPath),
+	// got 1 positional argument, which was the mode to use - no file path!
+	if (videoPath === undefined) {
+		console.error('Video file not given.')
+		return displayUsage()
+	}
+	fileName = getFileName(videoPath)
 	filePath = path.dirname(videoPath)
 
-// no "-o" argument, use default path in the format "chungus_Bounce.webm"
-if (outputPath === undefined) outputPath = path.join(filePath, `${fileName}_${type.w.replace(/\+/g, '_')}.webm`)
+	// check if value not given, use default
+	for (const i of argsConfig)
+		if (i.default && i.getValue() === undefined) i.default()
+
+	return true
+}
 
 // Build an index of temporary locations so they do not need to be repeatedly rebuilt.
 // All temporary files are within one parent folder for cleanliness and ease of removal.
@@ -136,8 +175,10 @@ function displayUsage() {
 		'\t-o,--output: change output file path (needs the desired output path as an argument)\n' +
 		'\t-k,--keyframes: only required with the type set to "Keyframes", sets the path to the keyframe file\n' +
 		'\t-b,--bitrate: change the bitrate used to encode the file (Default is 1 MB/s)\n' +
-		'\t-t,--tempo: change the bounces per second on "Bounce" and "Shutter" modes\n\n' +
-		'Recognized Modes:\n' +
+		'\t-t,--tempo: change the bounces per second on "Bounce" and "Shutter" modes\n' +
+		'\t-a,--angle: change the angle rotate per second on "Angle" modes, can be negative\n' +
+		'\t--thread: max thread use, default: 2\n' +
+		'\nRecognized Modes:\n' +
 		Object.keys(modes)
 			.map((m) => `\t${m}`)
 			.join('\n')
@@ -146,15 +187,29 @@ function displayUsage() {
 	console.log(Usage)
 }
 
+function ffmpegErrorHandler(e) {
+	console.error(e.message.split('\n').filter(m => !m.startsWith('  configuration:')).join('\n'))
+}
+
 async function main() {
 	// Verify the given path is accessible.
-	if (!videoPath || !fs.existsSync(videoPath)) return displayUsage()
+	if (!videoPath || !fs.existsSync(videoPath)) {
+		if (videoPath)
+			console.error(`Video file not found. "${videoPath}"`)
+		else
+			console.error(`Video file not given.`)
+		return displayUsage()
+	}
 
 	// Only build the path if temporary location index if the code can move forward. Less to do.
 	buildLocations()
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
-	console.log(`Input file: ${videoPath}\nUsing minimum w/h ${ourUtil.delta}px${type.w.includes('Bounce') || type.w.includes('Shutter') ? ` and bounce speed of ${tempo} per second.` : ''}.\nExtracting necessary input file info...`)
+	console.log(`\
+Input file: ${videoPath}.
+Using minimum w/h ${ourUtil.delta}px.
+Extracting necessary input file info...`
+	)
 	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	// Deconstructor extracts these values and renames them.
 	let {
@@ -162,12 +217,27 @@ async function main() {
 	} = JSON.parse(videoInfo.stdout.trim())
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
-	frameCount = Number(frameCount);
+	frameCount = Number(frameCount)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
-	console.log(`Resolution is ${maxWidth}x${maxHeight}.\nFramerate is ${framerate} (${decimalFramerate}).\nCreating temporary directories...`)
+	console.log(`\
+Resolution is ${maxWidth}x${maxHeight}.
+Framerate is ${framerate} (${decimalFramerate}).`
+	)
 
+	// Print config
+	console.log(`============Config============`)
+	const modeName = type.w[0].toUpperCase() + type.w.slice(1)
+	console.log(`Mode: ${modeName}`)
+	if (type.w.includes('bounce') || type.w.includes('shutter'))
+		console.log(`Bounce speed: ${tempo} times per second`)
+	else if (type.w.includes('rotate'))
+		console.log(`Rotating speed: ${angle} deg per second`)
+	console.log(`==============================`)
+
+	// Create temp folder
+	console.log('Creating temporary directories...')
 	await fs.promises.mkdir(workLocations.tempFrames, { recursive: true })
 	await fs.promises.mkdir(workLocations.tempResizedFrames, { recursive: true })
 
@@ -178,14 +248,17 @@ async function main() {
 	try {
 		await execSync(`ffmpeg -y -i "${videoPath}" -vn -c:a libvorbis "${workLocations.tempAudio}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch {
-		console.log('No audio detected.')
+		console.warn('No audio detected.')
 		audioFlag = false
 	}
 
 	// Extracts the frames to be modified for the wackiness.
 	console.log('Splitting file into frames...')
-	await execSync(`ffmpeg -y -i "${videoPath}" "${workLocations.tempFrameFiles}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
-
+	try {
+		await execSync(`ffmpeg -threads ${maxThread} -y -i "${videoPath}" "${workLocations.tempFrameFiles}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+	} catch (e) {
+		ffmpegErrorHandler(e)
+	}
 	// Sorts with a map so extraction of information only happens once per entry.
 	const tempFramesFiles = fs.readdirSync(workLocations.tempFrames)
 	const tempFramesFrames = tempFramesFiles
@@ -193,10 +266,11 @@ async function main() {
 		.map((f) => ({ file: f, n: Number(getFileName(f)) }))
 		.sort((a, b) => a.n - b.n)
 	// Index tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
-	let index = 0,
-		lines = [],
-		length = frameCount
+	let frame = 0,
+		tempFiles = []
 
+	// type.w's first character is uppercase, make it lower
+	type.w = type.w.toLowerCase()
 	if (/\+/.test(type.w)) {
 		type.w = type.w.split(/\+/g)
 	} else {
@@ -208,26 +282,29 @@ async function main() {
 		keyFrameFile,
 		maxWidth,
 		maxHeight,
-		frameCount: length,
+		frameCount,
 		frameRate: decimalFramerate,
 	}
 
+	// Setup modes
 	for (const modeToSetUp of type.w)
 		if (modes[modeToSetUp].setup.constructor.name === 'AsyncFunction') await modes[modeToSetUp].setup(setupInfo)
 		else modes[modeToSetUp].setup(setupInfo)
 
-	process.stdout.write(`Converting frames to webm (File ${index}/${frameCount})...`)
+	process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
 
+	const subProcess = []
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 
 		const infoObject = {
-			frame: index,
+			frame: frame,
 			maxWidth: maxWidth,
 			maxHeight: maxHeight,
-			frameCount: length,
+			frameCount: frameCount,
 			frameRate: decimalFramerate,
-			tempo: tempo
+			tempo: tempo,
+			angle: angle,
 		}
 
 		const frameBounds = {}
@@ -235,27 +312,52 @@ async function main() {
 			const current = modes[mode].getFrameBounds(infoObject)
 			if (current.width !== undefined) frameBounds.width = current.width
 			if (current.height !== undefined) frameBounds.height = current.height
+			if (current.command !== undefined) frameBounds.command = current.command
 		}
 
 		if (frameBounds.width === undefined) frameBounds.width = maxWidth
 		if (frameBounds.height === undefined) frameBounds.height = maxHeight
 
 		// Creates the respective resized frame based on the above.
-		await execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 -vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height} -r ${framerate} -f webm "${path.join(workLocations.tempResizedFrames, file + '.webm')}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 
-		// Tracks the new file for concatenation later.
-		lines.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
-		index++
-		if (index == frameCount) break;
-		process.stdout.clearLine()
-		process.stdout.cursorTo(0)
-		process.stdout.write(`Converting frames to webm (File ${index}/${length})...`)
+		try {
+			// The part of command can be change
+			const command = frameBounds.command
+				? frameBounds.command
+				: `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`
+			const outputFileName = path.join(workLocations.tempResizedFrames, file + '.webm')
+
+			// Wait if subProcess is full
+			if (subProcess.length >= maxThread)
+				await subProcess.shift()
+			// Add to subProcess
+			subProcess.push(execSync(`ffmpeg -y -i "${path.join(workLocations.tempFrames, file)}" -c:v vp8 -b:v ${bitrate} -crf 10 ${command} -r ${framerate} -threads 1 -f webm "${outputFileName}"`,
+				{ maxBuffer: 1024 * 1000 * 8 /* 8mb */ }))
+
+			// Tracks the new file for concatenation later.
+			tempFiles.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
+			frame++
+			process.stdout.clearLine()
+			process.stdout.cursorTo(0)
+			if (frame === frameCount) {
+				for (const process of subProcess)
+					await process
+				// Clean up
+				subProcess.length = 0
+				process.stdout.write(`Converting frames to webm (done)...`)
+				break
+			}
+			process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
+		} catch (e) {
+			ffmpegErrorHandler(e)
+			return
+		}
 	}
 	process.stdout.write('\n')
 
 	// Writes the concatenation file for the next step.
 	console.log('Writing concat file...')
-	await fs.promises.writeFile(workLocations.tempConcatList, lines.join('\n'))
+	await fs.promises.writeFile(workLocations.tempConcatList, tempFiles.join('\n'))
 
 	// Concatenates the resized files.
 	//console.log('Combining webm files into a single webm...')
@@ -269,10 +371,16 @@ async function main() {
 	console.log(`Concatenating segments${audioFlag ? ' and applying audio ' : ' '}for final webm file...`)
 	//if(audioFlag) await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -i "${workLocations.tempAudio}" -c copy "${workLocations.outputFile}"`)
 	//else await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -c copy "${workLocations.outputFile}"`)
-	await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}"${audioFlag ? ` -i "${workLocations.tempAudio}" ` : ' '}-c copy "${workLocations.outputFile}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+	try {
+		await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}"${audioFlag ? ` -i "${workLocations.tempAudio}" ` : ' '}-c copy "${workLocations.outputFile}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+	} catch (e) {
+		ffmpegErrorHandler(e)
+	}
 
 	// Recursive removal of temporary files via the main temporary folder.
 	console.log('Done!\nRemoving temporary files...')
 	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
+
+if (parseCommandArguments() !== true) return
 void main()

@@ -25,4 +25,12 @@ async function getAudioLevelMap(videoPath) {
 	return intermediateMap.map((v) => ({ percentMax: highest.dBs / v.dBs, ...v }))
 }
 
-module.exports = { delta, getAudioLevelMap }
+const WARN = `\n[WARNING] %s\n`
+const ERROR = `\n[ERROR] %s\n`
+const orgConsoleWarn = console.warn
+const orgConsoleError = console.error
+console.warn = (m) => orgConsoleWarn(WARN, m)
+console.error = (m) => orgConsoleError(ERROR, m)
+
+
+module.exports = {delta, getAudioLevelMap}
