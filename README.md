@@ -1,4 +1,10 @@
- # NodeJS
+# Dependencies
+
+NodeJS
+FFmpeg
+FFprobe
+
+# NodeJS
  
  To begin installation, you must install NodeJS first. You can find the NodeJS download [here.](https://nodejs.org/en/)
 
@@ -15,15 +21,13 @@ Unzip the folder, move it to your downloads and then rename it to "ffmpeg".
 
   If you get a success message, type in "ffmpeg" to the command prompt. If you get an error, you need to restart your computer, once finished restarting, run ffmpeg inside of the command prompt window once more, and if you do not get an error you're all set.
 
-# WackyWebM
+# How to Run
 
   Once you've downloaded the WackyWebM folder by going to the GitHub repository and selecting the green "Code" button, then clicking "Download ZIP"
 
   Once the ZIP is fully installed, you need to extract the folder inside. After doing this, you are set. 
   
-# How to Run
-  
-  `node wackywebm.js [mode] <file>`
+  Use `node wackywebm.js [mode] <file>` to use WackyWebM without running the run.bat.
 
 If you're on windows, you can simply double-click run.bat, as long as it's in the same folder as wackywebm.js.
 
