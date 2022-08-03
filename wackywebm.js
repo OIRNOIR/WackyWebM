@@ -25,6 +25,11 @@ for (const modeFile of fs.readdirSync(modesDir).filter(file => file.endsWith('.j
 }
 module.exports = { modes }
 
+// recommended way to check if this file is the entry point, as per
+// https://nodejs.org/api/deprecations.html#DEP0144
+if (require.main !== module)
+	return;
+
 const type = { w: undefined }
 let videoPath = undefined,
 	fileName = undefined,

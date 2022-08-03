@@ -10,14 +10,9 @@
 :::                            |___/                           
 
 REM Print Ascii Art
-for /f "delims=: tokens=*" %%A in ('findstr /b ::: "%~f0"') do @echo(%%A
 
-REM Ask for required inputs
-set /p "mode=Mode (audiobounce, audioshutter, bounce, jumpscare, keyframes, shrink, shutter, sporadic): "
-set /p "file=File: "
+echo Installing Dependencies - this might take a while the first time.
+call npm i
 
-REM Run node commmand
-node wackywebm.js %mode% "%file%"
-
-REM Wait for keyboard input
-pause
+echo Starting UI
+npm run terminal_ui

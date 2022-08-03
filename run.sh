@@ -10,9 +10,8 @@ echo "
                             |___/                           
 "
 
-# Ask for required inputs
-read -p "Mode (audiobounce, audioshutter, bounce, jumpscare, keyframes, shrink, shutter, sporadic): " mode
-read -p "File: " file
+echo "Installing Dependencies - this might take a while the first time."
+npm i
 
-# Run node commmand
-node wackywebm.js $mode "$file"
+echo "Starting UI"
+npm run terminal_ui

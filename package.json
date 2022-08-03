@@ -9,7 +9,8 @@
 		"fmt": "prettier --write **/*.{md,css,js,json}",
 		"fmt:check": "prettier --check **/*.{md,css,js,json}",
 		"lint": "eslint **/*.js",
-		"lint:fix": "eslint **/*.js --fix"
+		"lint:fix": "eslint **/*.js --fix",
+		"terminal_ui": "node blessed-ui.js"
 	},
 	"repository": {
 		"type": "git",
@@ -22,6 +23,7 @@
 	},
 	"homepage": "https://github.com/OIRNOIR/WebM-Maker-Thing-Idk#readme",
 	"devDependencies": {
+		"blessed": "^0.1.81",
 		"eslint": "^8.20.0",
 		"prettier": "2.7.1"
 	}
