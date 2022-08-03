@@ -263,11 +263,10 @@ Framerate is ${framerate} (${decimalFramerate}).`
 	const tempFramesFiles = fs.readdirSync(workLocations.tempFrames)
 	const tempFramesFrames = tempFramesFiles
 		.filter((f) => f.endsWith('png'))
-		.map((f) => ({ file: f, n: Number(getFileName(f)) }))
-		.sort((a, b) => a.n - b.n)
+		.map((f) => ({ file: f, frame: Number(getFileName(f)) }))
+		.sort((a, b) => a.frame - b.frame)
 	// Index tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
-	let frame = 0,
-		tempFiles = []
+	let tempFiles = []
 
 	// type.w's first character is uppercase, make it lower
 	type.w = type.w.toLowerCase()
@@ -286,37 +285,31 @@ Framerate is ${framerate} (${decimalFramerate}).`
 		frameRate: decimalFramerate,
 	}
 
+	const baseInfoObject = {
+		maxWidth: maxWidth,
+		maxHeight: maxHeight,
+		frameCount: frameCount,
+		frameRate: decimalFramerate,
+		tempo: tempo,
+		angle: angle
+	}
+
 	// Setup modes
 	for (const modeToSetUp of type.w)
 		if (modes[modeToSetUp].setup.constructor.name === 'AsyncFunction') await modes[modeToSetUp].setup(setupInfo)
 		else modes[modeToSetUp].setup(setupInfo)
 
-	process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
+	process.stdout.write(`Converting frames to webm (File 1/${frameCount})...`)
 
 	const subProcess = []
-	for (const { file } of tempFramesFrames) {
+	for (const { file, frame } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 
-		const infoObject = {
-			frame: frame,
-			maxWidth: maxWidth,
-			maxHeight: maxHeight,
-			frameCount: frameCount,
-			frameRate: decimalFramerate,
-			tempo: tempo,
-			angle: angle,
-		}
+		const infoObject = Object.assign({ frame: frame - 1 }, baseInfoObject)
 
-		const frameBounds = {}
-		for (const mode of type.w) {
-			const current = modes[mode].getFrameBounds(infoObject)
-			if (current.width !== undefined) frameBounds.width = current.width
-			if (current.height !== undefined) frameBounds.height = current.height
-			if (current.command !== undefined) frameBounds.command = current.command
-		}
-
-		if (frameBounds.width === undefined) frameBounds.width = maxWidth
-		if (frameBounds.height === undefined) frameBounds.height = maxHeight
+		const frameBounds = { width: maxWidth, height: maxHeight }
+		for (const mode of type.w)
+			Object.assign(frameBounds, modes[mode].getFrameBounds(infoObject))
 
 		// Creates the respective resized frame based on the above.
 
@@ -336,7 +329,6 @@ Framerate is ${framerate} (${decimalFramerate}).`
 
 			// Tracks the new file for concatenation later.
 			tempFiles.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
-			frame++
 			process.stdout.clearLine()
 			process.stdout.cursorTo(0)
 			if (frame === frameCount) {
@@ -347,7 +339,7 @@ Framerate is ${framerate} (${decimalFramerate}).`
 				process.stdout.write(`Converting frames to webm (done)...`)
 				break
 			}
-			process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
+			process.stdout.write(`Converting frames to webm (File ${frame + 1}/${frameCount})...`)
 		} catch (e) {
 			ffmpegErrorHandler(e)
 			return

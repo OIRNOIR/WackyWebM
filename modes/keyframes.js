@@ -91,8 +91,9 @@ async function parseKeyFrameFile(keyFrameFile, framerate, originalWidth, origina
 				else if (postfix[i] === '/') {
 					const b = queue.pop()
 					queue.push(queue.pop() / b)
-				} else if (postfix[i].toLowerCase() === 'lastWidth') queue.push(data[dataIndex - 1].width)
-				else if (postfix[i].toLowerCase() === 'lastHeight') queue.push(data[dataIndex - 1].height)
+				}
+				else if (postfix[i].toLowerCase() === 'lastwidth') queue.push(data[dataIndex - 1].width)
+				else if (postfix[i].toLowerCase() === 'lastheight') queue.push(data[dataIndex - 1].height)
 				else if (postfix[i].toLowerCase() === 'last') queue.push(data[dataIndex - 1][evaluatingHeight ? 'height' : 'width'])
 				else if (postfix[i].toLowerCase() === 'original') queue.push(evaluatingHeight ? originalHeight : originalWidth)
 			}
