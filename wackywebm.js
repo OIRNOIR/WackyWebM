@@ -359,12 +359,9 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 				// 10 frames for one thread
 				const threadUse = Math.min(maxThread, Math.ceil(sameSizeCount / 10))
 				const startFrame = frame - sameSizeCount + 1;
-				// basically, when we reach the last frame (so frame === frameCount - 1), we save, so we don't skip the last segment
-				const frameLen = frame === frameCount - 1 ? sameSizeCount + 1 : sameSizeCount
 				const inputFile = path.join(workLocations.tempFrames, '%d.png')
 				const outputFileName = path.join(workLocations.tempResizedFrames, file + '.webm')
-				const command = `ffmpeg -y -r ${framerate} -start_number ${startFrame} -i "${inputFile}" -frames:v ${frameLen} -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads ${threadUse} -f webm "${outputFileName}"`
-
+				const command = `ffmpeg -y -r ${framerate} -start_number ${startFrame} -i "${inputFile}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads ${threadUse} -f webm "${outputFileName}"`
 
 				//TODO: figure out a smarter way to just wait for *any* thread to finish, instead of just the 1st (since the later ones might finish before the 1st in the list)
 
@@ -394,8 +391,23 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 				newProcess.threadUse = threadUse
 				threadUseCount += threadUse
 				subProcess.push(newProcess)
-
 				tempFiles.push(`file '${outputFileName}'`)
+
+				// we save when current's width/height change > compressionLevel, so we are not saving the current frame
+				// so when we reach the last frame (frame === frameCount - 1), we have to include current frame
+				if (frame === frameCount - 1) {
+					const lastFrameOutputName = path.join(workLocations.tempResizedFrames, 'end.webm')
+					const vfCommand = frameBounds.command ?? `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`
+					console.log(vfCommand)
+					const newProcess = execAsync(
+						`ffmpeg -y -r ${framerate} -start_number ${frame + 1} -i "${inputFile}" -frames:v 1 -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads 1 -f webm "${lastFrameOutputName}"`,
+						{ maxBuffer: 1024 * 1000 * 8 }).then(() => newProcess.done = true)
+					newProcess.assignedFrames = sameSizeCount
+					newProcess.threadUse = threadUse
+					threadUseCount += threadUse
+					subProcess.push(newProcess)
+					tempFiles.push(`file '${lastFrameOutputName}'`)
+				}
 
 				// Output log
 				const framePad = String(sameSizeCount).padStart((Math.log10(frameCount) + 1) | 0);
