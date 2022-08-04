@@ -446,7 +446,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 
 	// Recursive removal of temporary files via the main temporary folder.
 	console.log('Done!\nRemoving temporary files...')
-	// await fs.promises.rm(workLocations.tempFolder, { recursive: true })
+	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
 
 if (parseCommandArguments() !== true) return
