@@ -143,7 +143,10 @@ function parseCommandArguments() {
 					.includes(x.toLowerCase())
 			)
 		) {
-			type.w = arg[0].toUpperCase() + arg.slice(1)
+			type.w = arg
+				.split(/\+/g)
+				.map((x) => x[0].toUpperCase() + x.slice(1))
+				.join('+')
 		} else {
 			if (videoPath) videoPath += ' ' + arg
 			else videoPath = arg
@@ -311,7 +314,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		threadUseCount = 0,
 		lastWidth = -1,
 		lastHeight = -1,
-		sameSizeCount = 1,
+		sameSizeCount = 0,
 		totalFramesDone = 0
 
 	const startTime = Date.now();

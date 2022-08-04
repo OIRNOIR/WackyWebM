@@ -2,9 +2,16 @@ module.exports = {
 	setup: () => {
 	},
 	getFrameBounds: (info) => {
-		const minimumSizeFrame = 300
+		// shrink to minimumSize time (in sec)
+		const minimumSizeTime = 10
+		// jump to full size time (in sec)
+		const fullSizeTime = 15.6
+		// minimum width and height
 		const minimumSize = 10
-		const fullSizeFrame = 465
+
+
+		const minimumSizeFrame = minimumSizeTime * info.frameRate
+		const fullSizeFrame = fullSizeTime * info.frameRate
 
 		let width, height
 		if (info.frame < minimumSizeFrame) {
