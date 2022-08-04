@@ -305,15 +305,6 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		if (modes[modeToSetUp].setup.constructor.name === 'AsyncFunction') await modes[modeToSetUp].setup(setupInfo)
 		else modes[modeToSetUp].setup(setupInfo)
 
-	const baseInfoObject = {
-		maxWidth: maxWidth,
-		maxHeight: maxHeight,
-		frameCount: frameCount,
-		frameRate: decimalFramerate,
-		tempo: tempo,
-		angle: angle
-	}
-
 	process.stdout.write(`Converting frames to webm (File 1/${frameCount})...`)
 
 	const subProcess = [],
