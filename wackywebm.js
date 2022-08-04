@@ -278,19 +278,11 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 	const tempFramesFiles = fs.readdirSync(workLocations.tempFrames)
 	const tempFramesFrames = tempFramesFiles
 		.filter((f) => f.endsWith('png'))
-		.map((f) => ({ file: f, n: Number(getFileName(f)) }))
-		.sort((a, b) => a.n - b.n)
-	// Index tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
-	let frame = 0,
-		tempFiles = []
+		.map((f) => ({ file: f, frame: Number(getFileName(f)) }))
+		.sort((a, b) => a.frame - b.frame)
 
 	// type.w's first character is uppercase, make it lower
-	type.w = type.w.toLowerCase()
-	if (/\+/.test(type.w)) {
-		type.w = type.w.split(/\+/g)
-	} else {
-		type.w = [type.w]
-	}
+	type.w = [...type.w.toLowerCase().split('+')]
 
 	const setupInfo = {
 		videoPath,
@@ -298,7 +290,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		maxWidth,
 		maxHeight,
 		frameCount,
-		frameRate: decimalFramerate,
+		frameRate: decimalFramerate
 	}
 
 	// Setup modes
@@ -306,48 +298,43 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		if (modes[modeToSetUp].setup.constructor.name === 'AsyncFunction') await modes[modeToSetUp].setup(setupInfo)
 		else modes[modeToSetUp].setup(setupInfo)
 
-	process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
+	const baseInfoObject = {
+		maxWidth: maxWidth,
+		maxHeight: maxHeight,
+		frameCount: frameCount,
+		frameRate: decimalFramerate,
+		tempo: tempo,
+		angle: angle
+	}
 
-	const subProcess = []
+	process.stdout.write(`Converting frames to webm (File 1/${frameCount})...`)
+
+	const subProcess = [],
+		tempFiles = [] // Index tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
 
 	let lastWidth = -1,
 		lastHeight = -1,
-		sameSizeCount = 0
-	let totalFramesDone = 0
+		sameSizeCount = 0,
+		totalFramesDone = 0
 
 	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
-	const maxSegmentLength = Math.floor(frameCount / maxThread);
+	const maxSegmentLength = Math.floor(frameCount / maxThread)
 
 	for (const { file } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 
-		const infoObject = {
-			frame: frame,
-			maxWidth: maxWidth,
-			maxHeight: maxHeight,
-			frameCount: frameCount,
-			frameRate: decimalFramerate,
-			tempo: tempo,
-			angle: angle,
-		}
+		const infoObject = Object.assign({ frame: frame - 1 }, baseInfoObject)
 
-		const frameBounds = {}
-		for (const mode of type.w) {
-			const current = modes[mode].getFrameBounds(infoObject)
-			if (current.width !== undefined) frameBounds.width = current.width
-			if (current.height !== undefined) frameBounds.height = current.height
-			if (current.command !== undefined) frameBounds.command = current.command
-		}
+		const frameBounds = { width: maxWidth, height: maxHeight }
+		for (const mode of type.w)
+			Object.assign(frameBounds, modes[mode].getFrameBounds(infoObject))
 
-		if (frameBounds.width === undefined) frameBounds.width = maxWidth
-		if (frameBounds.height === undefined) frameBounds.height = maxHeight
-
-		if (frame === 0) {
+		if (infoObject.frame === 0) {
 			lastWidth = frameBounds.width
 			lastHeight = frameBounds.height
 		}
 
-		if (Math.abs(frameBounds.width - lastWidth) + Math.abs(frameBounds.height - lastHeight) > compressionLevel || frame === frameCount - 1 || sameSizeCount > maxSegmentLength) {
+		if (Math.abs(frameBounds.width - lastWidth) + Math.abs(frameBounds.height - lastHeight) > compressionLevel || infoObject.frame === frameCount - 1 || sameSizeCount > maxSegmentLength) {
 			// Creates the respective resized frame based on the above.
 			try {
 				// only make new partial webm if frame size changed.
