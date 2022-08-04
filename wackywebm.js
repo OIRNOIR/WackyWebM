@@ -359,9 +359,11 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 				// 10 frames for one thread
 				const threadUse = Math.min(maxThread, Math.ceil(sameSizeCount / 10))
 				const startFrame = frame - sameSizeCount + 1;
+				// basically, when we reach the last frame (so frame === frameCount - 1), we save, so we don't skip the last segment
+				const frameLen = frame === frameCount - 1 ? sameSizeCount + 1 : sameSizeCount
 				const inputFile = path.join(workLocations.tempFrames, '%d.png')
 				const outputFileName = path.join(workLocations.tempResizedFrames, file + '.webm')
-				const command = `ffmpeg -y -r ${framerate} -start_number ${startFrame} -i "${inputFile}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads ${threadUse} -f webm "${outputFileName}"`
+				const command = `ffmpeg -y -r ${framerate} -start_number ${startFrame} -i "${inputFile}" -frames:v ${frameLen} -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads ${threadUse} -f webm "${outputFileName}"`
 
 
 				//TODO: figure out a smarter way to just wait for *any* thread to finish, instead of just the 1st (since the later ones might finish before the 1st in the list)
