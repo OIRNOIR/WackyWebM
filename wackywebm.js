@@ -293,6 +293,15 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		frameRate: decimalFramerate
 	}
 
+	const baseInfoObject = {
+		maxWidth: maxWidth,
+		maxHeight: maxHeight,
+		frameCount: frameCount,
+		frameRate: decimalFramerate,
+		tempo: tempo,
+		angle: angle
+	}
+
 	// Setup modes
 	for (const modeToSetUp of type.w)
 		if (modes[modeToSetUp].setup.constructor.name === 'AsyncFunction') await modes[modeToSetUp].setup(setupInfo)
