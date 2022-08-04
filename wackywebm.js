@@ -202,8 +202,7 @@ function displayUsage() {
 		'\nRecognized Modes:\n' +
 		Object.keys(modes)
 			.map((m) => `\t${m}`)
-			.join('\n')
-			.toLowerCase() +
+			.join('\n') +
 		'\nIf no mode is specified, "Bounce" is used.'
 	console.log(Usage)
 }
@@ -290,9 +289,6 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		.filter((f) => f.endsWith('png'))
 		.map((f) => ({ file: f, n: Number(getFileName(f)) }))
 		.sort((a, b) => a.n - b.n)
-	// Index tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
-	let frame = 0,
-		tempFiles = []
 
 	const setupInfo = {
 		videoPath,
@@ -308,23 +304,24 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		if (modes[modeToSetUp].setup.constructor.name === 'AsyncFunction') await modes[modeToSetUp].setup(setupInfo)
 		else modes[modeToSetUp].setup(setupInfo)
 
-	const startTime = Date.now();
-	process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
-
-	// Creates the respective resized frame based on the above.
-	let subProcess = []
-	let threadUseCount = 0,
+	// Frame tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
+	let frame = 0,
+		tempFiles = [],
+		subProcess = [],
+		threadUseCount = 0,
 		lastWidth = -1,
 		lastHeight = -1,
 		sameSizeCount = 1,
 		totalFramesDone = 0
 
+	const startTime = Date.now();
+	process.stdout.write(`Converting frames to webm...`)
+
 	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
 	const maxSegmentLength = Math.floor(frameCount / maxThread);
 
+	// Creates the respective resized frame based on the selected mode.
 	for (const { file } of tempFramesFrames) {
-		// Makes the height/width changes based on the selected type.
-
 		const infoObject = {
 			frame: frame,
 			maxWidth: maxWidth,
@@ -355,7 +352,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 			// Creates the respective resized frame based on the above.
 			try {
 				// The part of command can be change
-				const vfCommand = frameBounds.command ?? `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`
+				const vfCommand = frameBounds.command ?? `-vf scale=${lastWidth}x${lastHeight} -aspect ${lastWidth}:${lastHeight}`
 				// 10 frames for one thread
 				const threadUse = Math.min(maxThread, Math.ceil(sameSizeCount / 10))
 				const startFrame = frame - sameSizeCount + 1;
@@ -449,7 +446,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 
 	// Recursive removal of temporary files via the main temporary folder.
 	console.log('Done!\nRemoving temporary files...')
-	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
+	// await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
 
 if (parseCommandArguments() !== true) return
