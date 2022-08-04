@@ -291,9 +291,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		maxHeight,
 		frameCount,
 		frameRate: decimalFramerate
-	}
-
-	const baseInfoObject = {
+	}, baseInfoObject = {
 		maxWidth: maxWidth,
 		maxHeight: maxHeight,
 		frameCount: frameCount,
