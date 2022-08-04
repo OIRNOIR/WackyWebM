@@ -337,7 +337,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 			try {
 				// only make new partial webm if frame size changed.
 				const outputFileName = path.join(workLocations.tempResizedFrames, file + '.webm')
-				const command = `ffmpeg -y -r ${framerate} -start_number ${frame - sameSizeCount + 1} -i "${path.join(workLocations.tempFrames, '%d.png')}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 ${frameBounds.command ?? `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`} -threads 1 -f webm "${outputFileName}"`
+				const command = `ffmpeg -y -r ${framerate} -start_number ${infoObject.frame - sameSizeCount + 1} -i "${path.join(workLocations.tempFrames, '%d.png')}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 ${frameBounds.command ?? `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`} -threads 1 -f webm "${outputFileName}"`
 
 				// Wait if subProcess is full
 				//TODO: figure out a smarter way to just wait for *any* thread to finish, instead of just the 1st (since the later ones might finish before the 1st in the list)
@@ -358,7 +358,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 
 				process.stdout.clearLine()
 				process.stdout.cursorTo(0)
-				process.stdout.write(`Converting ${sameSizeCount.toString().padStart(frameCount.toString().length, ' ')} frames to webm (frames ${frame}-${frame + sameSizeCount - 1} / ${frameCount}) - ${Math.floor((1000 * totalFramesDone) / frameCount) / 10.0}%`)
+				process.stdout.write(`Converting ${sameSizeCount.toString().padStart(frameCount.toString().length, ' ')} frames to webm (frames ${infoObject.frame}-${infoObject.frame + sameSizeCount - 1} / ${frameCount}) - ${Math.floor((1000 * totalFramesDone) / frameCount) / 10.0}%`)
 
 				sameSizeCount = 1
 				lastWidth = frameBounds.width
@@ -370,7 +370,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		} else {
 			sameSizeCount++
 		}
-		if (frame >= frameCount) {
+		if (infoObject.frame >= frameCount) {
 			for (const process of subProcess) await process
 			// Clean up
 			subProcess.length = 0
