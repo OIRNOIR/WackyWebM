@@ -318,7 +318,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
 	const maxSegmentLength = Math.floor(frameCount / maxThread)
 
-	for (const { file } of tempFramesFrames) {
+	for (const { file, frame } of tempFramesFrames) {
 		// Makes the height/width changes based on the selected type.
 
 		const infoObject = Object.assign({ frame: frame - 1 }, baseInfoObject)
