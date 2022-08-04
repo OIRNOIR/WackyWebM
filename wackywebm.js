@@ -370,7 +370,6 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		} else {
 			sameSizeCount++
 		}
-		frame++
 		if (frame >= frameCount) {
 			for (const process of subProcess) await process
 			// Clean up
