@@ -11,14 +11,16 @@ const fs = require('fs')
 const util = require('util')
 // I'll admit, inconvenient naming here.
 const ourUtil = require('./util')
-const execSync = util.promisify(require('child_process').exec)
+const execAsync = util.promisify(require('child_process').exec)
 const getFileName = (p) => path.basename(p, path.extname(p))
 
 const modes = {}
 const modesDir = path.join(__dirname, 'modes')
 for (const modeFile of fs.readdirSync(modesDir).filter((file) => file.endsWith('.js'))) {
 	try {
-		modes[modeFile.split('.')[0]] = require(path.join(modesDir, modeFile))
+		let modeName = modeFile.split('.')[0];
+		modeName = modeName[0].toUpperCase() + modeName.slice(1)
+		modes[modeName] = require(path.join(modesDir, modeFile))
 	} catch (e) {
 		console.warn(`mode: ${modeFile.split('.')[0]} load failed`)
 	}
@@ -113,7 +115,10 @@ function parseCommandArguments() {
 						console.error(`Illegal argument: ${arg}`)
 						return displayUsage()
 					}
-					j.call(++i === process.argv.length ? null : process.argv[i])
+					if (j.noValueAfter)
+						j.call(null)
+					else
+						j.call(++i === process.argv.length ? null : process.argv[i])
 					argFound = true
 					break
 				}
@@ -138,7 +143,10 @@ function parseCommandArguments() {
 					.includes(x.toLowerCase())
 			)
 		) {
-			type.w = arg.toLowerCase()
+			type.w = arg
+				.split(/\+/g)
+				.map((x) => x[0].toUpperCase() + x.slice(1))
+				.join('+')
 		} else {
 			if (videoPath) videoPath += ' ' + arg
 			else videoPath = arg
@@ -147,11 +155,11 @@ function parseCommandArguments() {
 
 	// not a single positional argument, we need at least 1
 	if (type.w === undefined) {
-		type.w = 'bounce'
+		type.w = 'Bounce'
 		console.warn(`Mode not selected, using default "${type.w}".`)
 	}
 	// Keyframes mode selected without providing keyframe file
-	if (type.w === 'keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
+	if (type.w === 'Keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
 		if (keyFrameFile) console.error(`Keyframes file not found. "${keyFrameFile}"`)
 		else console.error(`Keyframes file not given.`)
 		return displayUsage()
@@ -197,8 +205,7 @@ function displayUsage() {
 		'\nRecognized Modes:\n' +
 		Object.keys(modes)
 			.map((m) => `\t${m}`)
-			.join('\n')
-			.toLowerCase() +
+			.join('\n') +
 		'\nIf no mode is specified, "Bounce" is used.'
 	console.log(Usage)
 }
@@ -228,7 +235,7 @@ async function main() {
 Input file: ${videoPath}.
 Using minimum w/h ${ourUtil.delta}px.
 Extracting necessary input file info...`)
-	const videoInfo = await execSync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+	const videoInfo = await execAsync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	// Deconstructor extracts these values and renames them.
 	let {
 		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate, nb_read_frames: frameCount }],
@@ -243,10 +250,15 @@ Extracting necessary input file info...`)
 Resolution is ${maxWidth}x${maxHeight}.
 Framerate is ${framerate} (${decimalFramerate}).`)
 
+	if (/\+/.test(type.w)) {
+		type.w = type.w.split(/\+/g)
+	} else {
+		type.w = [type.w]
+	}
+
 	// Print config
 	console.log(`============Config============`)
-	const modeName = type.w[0].toUpperCase() + type.w.slice(1)
-	console.log(`Mode: ${modeName}`)
+	console.log(`Mode: ${type.w}`)
 	if (type.w.includes('bounce') || type.w.includes('shutter')) console.log(`Bounce speed: ${tempo} times per second`)
 	else if (type.w.includes('rotate')) console.log(`Rotating speed: ${angle} deg per second`)
 	console.log(`==============================`)
@@ -261,7 +273,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 	// If the file has no audio, flag it to it is not attempted.
 	let audioFlag = true
 	try {
-		await execSync(`ffmpeg -y -i "${videoPath}" -vn -c:a libvorbis "${workLocations.tempAudio}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+		await execAsync(`ffmpeg -y -i "${videoPath}" -vn -c:a libvorbis "${workLocations.tempAudio}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch {
 		console.warn('No audio detected.')
 		audioFlag = false
@@ -270,7 +282,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 	// Extracts the frames to be modified for the wackiness.
 	console.log('Splitting file into frames...')
 	try {
-		await execSync(`ffmpeg -threads ${maxThread} -y -i "${videoPath}" "${workLocations.tempFrameFiles}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+		await execAsync(`ffmpeg -threads ${maxThread} -y -i "${videoPath}" "${workLocations.tempFrameFiles}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch (e) {
 		ffmpegErrorHandler(e)
 	}
@@ -280,17 +292,6 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		.filter((f) => f.endsWith('png'))
 		.map((f) => ({ file: f, n: Number(getFileName(f)) }))
 		.sort((a, b) => a.n - b.n)
-	// Index tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
-	let frame = 0,
-		tempFiles = []
-
-	// type.w's first character is uppercase, make it lower
-	type.w = type.w.toLowerCase()
-	if (/\+/.test(type.w)) {
-		type.w = type.w.split(/\+/g)
-	} else {
-		type.w = [type.w]
-	}
 
 	const setupInfo = {
 		videoPath,
@@ -306,21 +307,24 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		if (modes[modeToSetUp].setup.constructor.name === 'AsyncFunction') await modes[modeToSetUp].setup(setupInfo)
 		else modes[modeToSetUp].setup(setupInfo)
 
-	process.stdout.write(`Converting frames to webm (File ${frame}/${frameCount})...`)
-
-	const subProcess = []
-
-	let lastWidth = -1,
+	// Frame tracked from outside. Width and/or height initialize as the maximum and are not modified if unchanged.
+	let frame = 0,
+		tempFiles = [],
+		subProcess = [],
+		threadUseCount = 0,
+		lastWidth = -1,
 		lastHeight = -1,
-		sameSizeCount = 0
-	let totalFramesDone = 0
+		sameSizeCount = 0,
+		totalFramesDone = 0
+
+	const startTime = Date.now();
+	process.stdout.write(`Converting frames to webm...`)
 
 	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
 	const maxSegmentLength = Math.floor(frameCount / maxThread);
 
+	// Creates the respective resized frame based on the selected mode.
 	for (const { file } of tempFramesFrames) {
-		// Makes the height/width changes based on the selected type.
-
 		const infoObject = {
 			frame: frame,
 			maxWidth: maxWidth,
@@ -346,34 +350,70 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 			lastWidth = frameBounds.width
 			lastHeight = frameBounds.height
 		}
-
+		// only make new partial webm if frame size changed.
 		if (Math.abs(frameBounds.width - lastWidth) + Math.abs(frameBounds.height - lastHeight) > compressionLevel || frame === frameCount - 1 || sameSizeCount > maxSegmentLength) {
 			// Creates the respective resized frame based on the above.
 			try {
-				// only make new partial webm if frame size changed.
+				// The part of command can be change
+				const vfCommand = frameBounds.command ?? `-vf scale=${lastWidth}x${lastHeight} -aspect ${lastWidth}:${lastHeight}`
+				// 10 frames for one thread
+				const threadUse = Math.min(maxThread, Math.ceil(sameSizeCount / 10))
+				const startFrame = frame - sameSizeCount + 1;
+				const inputFile = path.join(workLocations.tempFrames, '%d.png')
 				const outputFileName = path.join(workLocations.tempResizedFrames, file + '.webm')
-				const command = `ffmpeg -y -r ${framerate} -start_number ${frame - sameSizeCount + 1} -i "${path.join(workLocations.tempFrames, '%d.png')}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 ${frameBounds.command ?? `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`} -threads 1 -f webm "${outputFileName}"`
+				const command = `ffmpeg -y -r ${framerate} -start_number ${startFrame} -i "${inputFile}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads ${threadUse} -f webm "${outputFileName}"`
 
-				// Wait if subProcess is full
 				//TODO: figure out a smarter way to just wait for *any* thread to finish, instead of just the 1st (since the later ones might finish before the 1st in the list)
-				if (subProcess.length >= maxThread) {
+
+				// Remove if process done
+				subProcess = subProcess.filter((process) => {
+					if (process.done) {
+						threadUseCount -= process.threadUse
+						totalFramesDone += process.assignedFrames
+						return false
+					}
+					return true
+				});
+				// Wait if subProcess is full
+				if (threadUseCount >= maxThread) {
 					// this is a little awkward, but we added the "assignedFrames" attribute to the promise, not the result, so we have to "get it out" before we await.
 					const processToAwait = subProcess.shift()
 					const doneFrames = processToAwait.assignedFrames
+					const threadUse = processToAwait.threadUse
 					await processToAwait
+					threadUseCount -= threadUse
 					totalFramesDone += doneFrames
 				}
 
-				const newProcess = execSync(command, { maxBuffer: 1024 * 1000 * 8 })
+				// Add task to subProcess, set done as true if process done so we can remove it without awaiting first task done
+				const newProcess = execAsync(command, { maxBuffer: 1024 * 1000 * 8 }).then(() => newProcess.done = true)
 				newProcess.assignedFrames = sameSizeCount
-
+				newProcess.threadUse = threadUse
+				threadUseCount += threadUse
 				subProcess.push(newProcess)
+				tempFiles.push(`file '${outputFileName}'`)
 
-				tempFiles.push(`file '${path.join(workLocations.tempResizedFrames, file + '.webm')}'`)
+				// we save when current's width/height change > compressionLevel, so we are not saving the current frame
+				// so when we reach the last frame (frame === frameCount - 1), we have to include current frame
+				if (frame === frameCount - 1) {
+					const lastFrameOutputName = path.join(workLocations.tempResizedFrames, 'end.webm')
+					const vfCommand = frameBounds.command ?? `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`
+					console.log(vfCommand)
+					const newProcess = execAsync(
+						`ffmpeg -y -r ${framerate} -start_number ${frame + 1} -i "${inputFile}" -frames:v 1 -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads 1 -f webm "${lastFrameOutputName}"`,
+						{ maxBuffer: 1024 * 1000 * 8 }).then(() => newProcess.done = true)
+					newProcess.assignedFrames = sameSizeCount
+					newProcess.threadUse = threadUse
+					threadUseCount += threadUse
+					subProcess.push(newProcess)
+					tempFiles.push(`file '${lastFrameOutputName}'`)
+				}
 
+				// Output log
+				const framePad = String(sameSizeCount).padStart((Math.log10(frameCount) + 1) | 0);
 				process.stdout.clearLine()
 				process.stdout.cursorTo(0)
-				process.stdout.write(`Converting ${sameSizeCount.toString().padStart(frameCount.toString().length, ' ')} frames to webm (frames ${frame}-${frame + sameSizeCount - 1} / ${frameCount}) - ${Math.floor((1000 * totalFramesDone) / frameCount) / 10.0}%`)
+				process.stdout.write(`Converting ${framePad} frames to webm (frames ${frame}-${frame + sameSizeCount - 1} / ${frameCount}) - ${Math.floor((1000 * totalFramesDone) / frameCount) / 10.0}%`)
 
 				sameSizeCount = 1
 				lastWidth = frameBounds.width
@@ -390,6 +430,9 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 			for (const process of subProcess) await process
 			// Clean up
 			subProcess.length = 0
+			process.stdout.clearLine()
+			process.stdout.cursorTo(0)
+			process.stdout.write(`Converting frames to webm (Done ${frameCount} frames)... use ${Date.now() - startTime}ms`)
 			process.stdout.write(`\nSuccessfully converted all frames to webm.`)
 			break
 		}
@@ -413,7 +456,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 	//if(audioFlag) await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -i "${workLocations.tempAudio}" -c copy "${workLocations.outputFile}"`)
 	//else await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -c copy "${workLocations.outputFile}"`)
 	try {
-		await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}"${audioFlag ? ` -i "${workLocations.tempAudio}" ` : ' '}-c copy "${workLocations.outputFile}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+		await execAsync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}"${audioFlag ? ` -i "${workLocations.tempAudio}" ` : ' '}-c copy "${workLocations.outputFile}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch (e) {
 		ffmpegErrorHandler(e)
 	}
