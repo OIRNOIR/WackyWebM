@@ -28,7 +28,7 @@ If you're having issues, want to share your custom modes, or learn from the comm
   ![image](https://user-images.githubusercontent.com/69131802/182697226-0a60be60-8a6d-433b-bc91-2627266f6058.png)
   ### Windows
   
-  To download FFmpeg for Windows, navigate to the Windows logo and select where you would like to download FFmpeg from. If you select `Windows builds by BtbN` then it is recommended to select `ffmpeg-master-latest-win64-gpl-shared.zip`
+  To download FFmpeg for Windows, navigate to the Windows logo and select `Windows builds by BtbN` after that, it is recommended to select `ffmpeg-master-latest-win64-gpl-shared.zip`
   
   Once downloaded, unzip the file and move it to somewhere safe.
   
