@@ -18,7 +18,7 @@ const modes = {}
 const modesDir = path.join(__dirname, 'modes')
 for (const modeFile of fs.readdirSync(modesDir).filter((file) => file.endsWith('.js'))) {
 	try {
-		let modeName = modeFile.split('.')[0];
+		let modeName = modeFile.split('.')[0]
 		modeName = modeName[0].toUpperCase() + modeName.slice(1)
 		modes[modeName] = require(path.join(modesDir, modeFile))
 	} catch (e) {
@@ -27,7 +27,7 @@ for (const modeFile of fs.readdirSync(modesDir).filter((file) => file.endsWith('
 }
 module.exports = { modes }
 
-const type = { w: undefined }
+const type = { w: [] }
 let videoPath = undefined,
 	fileName = undefined,
 	filePath = undefined,
@@ -87,7 +87,7 @@ const argsConfig = [
 	{
 		keys: ['-o', '--output'],
 		// no "-o" argument, use default path in the format "chungus_Bounce.webm"
-		default: () => (outputPath = path.join(filePath, `${fileName}_${type.w.replace(/\+/g, '_')}.webm`)),
+		default: () => (outputPath = path.join(filePath, `${fileName}_${type.w.join('_')}.webm`)),
 		call: (val) => (outputPath = val),
 		getValue: () => outputPath,
 		description: 'sets output file.',
@@ -136,17 +136,16 @@ function parseCommandArguments() {
 		// match any of the input types, in which case its also part of the path.
 		// split by + before trying to match to modes in order to support using multiple modes.
 		if (
-			type.w === undefined &&
-			arg.split(/\+/g).every((x) =>
+			type.w.length === 0 &&
+			arg.split('+').every((x) =>
 				Object.keys(modes)
 					.map((m) => m.toLowerCase())
 					.includes(x.toLowerCase())
 			)
 		) {
 			type.w = arg
-				.split(/\+/g)
+				.split('+')
 				.map((x) => x[0].toUpperCase() + x.slice(1))
-				.join('+')
 		} else {
 			if (videoPath) videoPath += ' ' + arg
 			else videoPath = arg
@@ -154,12 +153,12 @@ function parseCommandArguments() {
 	}
 
 	// not a single positional argument, we need at least 1
-	if (type.w === undefined) {
-		type.w = 'Bounce'
+	if (type.w.length === 0) {
+		type.w = ['Bounce']
 		console.warn(`Mode not selected, using default "${type.w}".`)
 	}
 	// Keyframes mode selected without providing keyframe file
-	if (type.w === 'Keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
+	if (type.w.includes('Keyframes') && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
 		if (keyFrameFile) console.error(`Keyframes file not found. "${keyFrameFile}"`)
 		else console.error(`Keyframes file not given.`)
 		return displayUsage()
@@ -250,17 +249,13 @@ Extracting necessary input file info...`)
 Resolution is ${maxWidth}x${maxHeight}.
 Framerate is ${framerate} (${decimalFramerate}).`)
 
-	if (/\+/.test(type.w)) {
-		type.w = type.w.split(/\+/g)
-	} else {
-		type.w = [type.w]
-	}
+	//type.w = [...type.w.split('+')]
 
 	// Print config
 	console.log(`============Config============`)
 	console.log(`Mode: ${type.w}`)
-	if (type.w.includes('bounce') || type.w.includes('shutter')) console.log(`Bounce speed: ${tempo} times per second`)
-	else if (type.w.includes('rotate')) console.log(`Rotating speed: ${angle} deg per second`)
+	if (type.w.includes('Bounce') || type.w.includes('Shutter')) console.log(`Bounce speed: ${tempo} times per second`)
+	else if (type.w.includes('Rotate')) console.log(`Rotating speed: ${angle} deg per second`)
 	console.log(`==============================`)
 
 	// Create temp folder
@@ -299,7 +294,14 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		maxWidth,
 		maxHeight,
 		frameCount,
+		frameRate: decimalFramerate
+	}, baseInfoObject = {
+		maxWidth,
+		maxHeight,
+		frameCount,
 		frameRate: decimalFramerate,
+		tempo,
+		angle
 	}
 
 	// Setup modes
@@ -317,34 +319,19 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		sameSizeCount = 0,
 		totalFramesDone = 0
 
-	const startTime = Date.now();
+	const startTime = Date.now()
 	process.stdout.write(`Converting frames to webm...`)
 
 	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
-	const maxSegmentLength = Math.floor(frameCount / maxThread);
+	const maxSegmentLength = Math.floor(frameCount / maxThread)
 
 	// Creates the respective resized frame based on the selected mode.
 	for (const { file } of tempFramesFrames) {
-		const infoObject = {
-			frame: frame,
-			maxWidth: maxWidth,
-			maxHeight: maxHeight,
-			frameCount: frameCount,
-			frameRate: decimalFramerate,
-			tempo: tempo,
-			angle: angle,
-		}
+		const infoObject = Object.assign({ frame }, baseInfoObject)
 
-		const frameBounds = {}
-		for (const mode of type.w) {
-			const current = modes[mode].getFrameBounds(infoObject)
-			if (current.width !== undefined) frameBounds.width = current.width
-			if (current.height !== undefined) frameBounds.height = current.height
-			if (current.command !== undefined) frameBounds.command = current.command
-		}
-
-		if (frameBounds.width === undefined) frameBounds.width = maxWidth
-		if (frameBounds.height === undefined) frameBounds.height = maxHeight
+		const frameBounds = { width: maxWidth, height: maxHeight }
+		for (const mode of type.w)
+			Object.assign(frameBounds, modes[mode].getFrameBounds(infoObject))
 
 		if (frame === 0) {
 			lastWidth = frameBounds.width
@@ -358,7 +345,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 				const vfCommand = frameBounds.command ?? `-vf scale=${lastWidth}x${lastHeight} -aspect ${lastWidth}:${lastHeight}`
 				// 10 frames for one thread
 				const threadUse = Math.min(maxThread, Math.ceil(sameSizeCount / 10))
-				const startFrame = frame - sameSizeCount + 1;
+				const startFrame = frame - sameSizeCount + 1
 				const inputFile = path.join(workLocations.tempFrames, '%d.png')
 				const outputFileName = path.join(workLocations.tempResizedFrames, file + '.webm')
 				const command = `ffmpeg -y -r ${framerate} -start_number ${startFrame} -i "${inputFile}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads ${threadUse} -f webm "${outputFileName}"`
@@ -373,7 +360,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 						return false
 					}
 					return true
-				});
+				})
 				// Wait if subProcess is full
 				if (threadUseCount >= maxThread) {
 					// this is a little awkward, but we added the "assignedFrames" attribute to the promise, not the result, so we have to "get it out" before we await.
@@ -398,7 +385,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 				if (frame === frameCount - 1) {
 					const lastFrameOutputName = path.join(workLocations.tempResizedFrames, 'end.webm')
 					const vfCommand = frameBounds.command ?? `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`
-					console.log(vfCommand)
+					//console.log(vfCommand)
 					const newProcess = execAsync(
 						`ffmpeg -y -r ${framerate} -start_number ${frame + 1} -i "${inputFile}" -frames:v 1 -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads 1 -f webm "${lastFrameOutputName}"`,
 						{ maxBuffer: 1024 * 1000 * 8 }).then(() => newProcess.done = true)
@@ -410,7 +397,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 				}
 
 				// Output log
-				const framePad = String(sameSizeCount).padStart((Math.log10(frameCount) + 1) | 0);
+				const framePad = String(sameSizeCount).padStart((Math.log10(frameCount) + 1) | 0)
 				process.stdout.clearLine()
 				process.stdout.cursorTo(0)
 				process.stdout.write(`Converting ${framePad} frames to webm (frames ${frame}-${frame + sameSizeCount - 1} / ${frameCount}) - ${Math.floor((1000 * totalFramesDone) / frameCount) / 10.0}%`)
