@@ -299,14 +299,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		maxWidth,
 		maxHeight,
 		frameCount,
-		frameRate: decimalFramerate
-	}, baseInfoObject = {
-		maxWidth: maxWidth,
-		maxHeight: maxHeight,
-		frameCount: frameCount,
 		frameRate: decimalFramerate,
-		tempo: tempo,
-		angle: angle
 	}
 
 	// Setup modes
@@ -328,7 +321,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 	process.stdout.write(`Converting frames to webm...`)
 
 	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
-	const maxSegmentLength = Math.floor(frameCount / maxThread)
+	const maxSegmentLength = Math.floor(frameCount / maxThread);
 
 	// Creates the respective resized frame based on the selected mode.
 	for (const { file } of tempFramesFrames) {
@@ -350,11 +343,10 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 			if (current.command !== undefined) frameBounds.command = current.command
 		}
 
-		const frameBounds = { width: maxWidth, height: maxHeight }
-		for (const mode of type.w)
-			Object.assign(frameBounds, modes[mode].getFrameBounds(infoObject))
+		if (frameBounds.width === undefined) frameBounds.width = maxWidth
+		if (frameBounds.height === undefined) frameBounds.height = maxHeight
 
-		if (infoObject.frame === 0) {
+		if (frame === 0) {
 			lastWidth = frameBounds.width
 			lastHeight = frameBounds.height
 		}
@@ -433,7 +425,8 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		} else {
 			sameSizeCount++
 		}
-		if (infoObject.frame >= frameCount) {
+		frame++
+		if (frame >= frameCount) {
 			for (const process of subProcess) await process
 			// Clean up
 			subProcess.length = 0
