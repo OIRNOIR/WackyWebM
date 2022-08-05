@@ -10,9 +10,8 @@ const fs = require('fs')
 // Synchronous execution via promisify.
 const util = require('util')
 // I'll admit, inconvenient naming here.
-const ourUtil = require('./util')
+const { delta, getFileName } = require('./util')
 const execAsync = util.promisify(require('child_process').exec)
-const getFileName = (p) => path.basename(p, path.extname(p))
 
 const modes = {}
 const modesDir = path.join(__dirname, 'modes')
@@ -218,7 +217,7 @@ function ffmpegErrorHandler(e) {
 	)
 }
 
-async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputFile) {
+async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath) {
 	// Verify the given path is accessible.
 	if (!videoPath || !fs.existsSync(videoPath)) {
 		if (videoPath) console.error(`Video file not found. "${videoPath}"`)
@@ -232,7 +231,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
 	console.log(`\
 Input file: ${videoPath}.
-Using minimum w/h ${ourUtil.delta}px.
+Using minimum w/h ${delta}px.
 Extracting necessary input file info...`)
 	const videoInfo = await execAsync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	// Deconstructor extracts these values and renames them.
@@ -475,4 +474,4 @@ if (parseCommandArguments() !== true) return
 
 // we're ignoring a promise (the one returned by main) here. this is by design and not harmful, so ignore the warning
 // noinspection JSIgnoredPromiseFromCall
-main(type.w, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath)
+main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath)
