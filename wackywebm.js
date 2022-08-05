@@ -18,16 +18,15 @@ const modes = {}
 const modesDir = path.join(__dirname, 'modes')
 for (const modeFile of fs.readdirSync(modesDir).filter((file) => file.endsWith('.js'))) {
 	try {
-		let modeName = modeFile.split('.')[0];
-		modeName = modeName[0].toUpperCase() + modeName.slice(1)
+		let modeName = getFileName(modeFile).toLowerCase()
 		modes[modeName] = require(path.join(modesDir, modeFile))
 	} catch (e) {
-		console.warn(`mode: ${modeFile.split('.')[0]} load failed`)
+		console.warn(`mode: ${getFileName(modeFile)} load failed`)
 	}
 }
 
-const type = { w: undefined }
-let videoPath = undefined,
+let selectedModes = [],
+	videoPath = [],
 	fileName = undefined,
 	filePath = undefined,
 	outputPath = undefined,
@@ -87,7 +86,7 @@ const argsConfig = [
 	{
 		keys: ['-o', '--output'],
 		// no "-o" argument, use default path in the format "chungus_Bounce.webm"
-		default: () => (outputPath = path.join(filePath, `${fileName}_${type.w.replace(/\+/g, '_')}.webm`)),
+		default: () => (outputPath = path.join(filePath, `${fileName}_${selectedModes.join('_')}.webm`)),
 		call: (val) => (outputPath = val),
 		getValue: () => outputPath,
 		description: 'sets output file.',
@@ -135,31 +134,18 @@ function parseCommandArguments() {
 		// (and every one after that) is video path, except when the first one doesn't
 		// match any of the input types, in which case its also part of the path.
 		// split by + before trying to match to modes in order to support using multiple modes.
-		if (
-			type.w === undefined &&
-			arg.split(/\+/g).every((x) =>
-				Object.keys(modes)
-					.map((m) => m.toLowerCase())
-					.includes(x.toLowerCase())
-			)
-		) {
-			type.w = arg
-				.split(/\+/g)
-				.map((x) => x[0].toUpperCase() + x.slice(1))
-				.join('+')
-		} else {
-			if (videoPath) videoPath += ' ' + arg
-			else videoPath = arg
-		}
+		const inputModes = arg.toLowerCase().split('+')
+		if (selectedModes.length === 0 && inputModes.every((x) => modes.hasOwnProperty(x))) selectedModes = inputModes
+		else videoPath.push(arg)
 	}
 
 	// not a single positional argument, we need at least 1
-	if (type.w === undefined) {
-		type.w = 'Bounce'
-		console.warn(`Mode not selected, using default "${type.w}".`)
+	if (selectedModes === undefined) {
+		selectedModes = ['bounce']
+		console.warn(`Mode not selected, using default "${selectedModes[0]}".`)
 	}
 	// Keyframes mode selected without providing keyframe file
-	if (type.w === 'Keyframes' && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
+	if (selectedModes.includes('Keyframes') && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
 		if (keyFrameFile) console.error(`Keyframes file not found. "${keyFrameFile}"`)
 		else console.error(`Keyframes file not given.`)
 		return displayUsage()
@@ -170,6 +156,7 @@ function parseCommandArguments() {
 		console.error('Video file not given.')
 		return displayUsage()
 	}
+	else videoPath = videoPath.join(' ')
 	fileName = getFileName(videoPath)
 	filePath = path.dirname(videoPath)
 
@@ -218,7 +205,7 @@ function ffmpegErrorHandler(e) {
 	)
 }
 
-async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputFile) {
+async function main() {
 	// Verify the given path is accessible.
 	if (!videoPath || !fs.existsSync(videoPath)) {
 		if (videoPath) console.error(`Video file not found. "${videoPath}"`)
@@ -248,12 +235,6 @@ Extracting necessary input file info...`)
 	console.log(`\
 Resolution is ${maxWidth}x${maxHeight}.
 Framerate is ${framerate} (${decimalFramerate}).`)
-
-	if (/\+/.test(selectedModes)) {
-		selectedModes = selectedModes.toLowerCase().split(/\+/g)
-	} else {
-		selectedModes = [selectedModes.toLowerCase()]
-	}
 
 	// Print config
 	console.log(`============Config============`)
@@ -447,7 +428,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 	//if(audioFlag) await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -i "${workLocations.tempAudio}" -c copy "${workLocations.outputFile}"`)
 	//else await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -c copy "${workLocations.outputFile}"`)
 	try {
-		await execAsync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}"${audioFlag ? ` -i "${workLocations.tempAudio}" ` : ' '}-c copy "${outputFile}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+		await execAsync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}"${audioFlag ? ` -i "${workLocations.tempAudio}" ` : ' '}-c copy "${outputPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch (e) {
 		ffmpegErrorHandler(e)
 	}
@@ -467,4 +448,4 @@ if (parseCommandArguments() !== true) return
 
 // we're ignoring a promise (the one returned by main) here. this is by design and not harmful, so ignore the warning
 // noinspection JSIgnoredPromiseFromCall
-main(type.w, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath)
+main()
