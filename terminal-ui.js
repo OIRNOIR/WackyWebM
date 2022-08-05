@@ -16,7 +16,7 @@ let stage = 1
 term.grabInput()
 
 const modeList = Object.keys(modes)
-let selectedMode = modeList.indexOf('bounce')
+let selectedMode = modeList.indexOf('Bounce')
 const redrawStage1 = () => {
 	term.clear()
 	term.bold.underline('Select Mode to use with arrow keys, confirm with enter.\n\n')
@@ -47,7 +47,7 @@ const keysToFlags = {
 const redrawStage2 = () => {
 	term.clear()
 	if (currentEdit === undefined) {
-		term.bold.underline(`to change any options (all of which ${modeList[selectedMode] === 'keyframes' ? 'except the keyframe file ' : ''}are optional), press the corresponding button. When you are done, press enter.\n\n`)
+		term.bold.underline(`to change any options (all of which ${modeList[selectedMode] === 'Keyframes' ? 'except the keyframe file ' : ''}are optional), press the corresponding button. When you are done, press enter.\n\n`)
 		// the process of figuring out which options to display here could possibly be automated, but it seems too much
 		// trouble for the marginal benefit, considering how rarely new ones get added.
 		for (const key of Object.keys(keysToFlags)) {
@@ -91,11 +91,13 @@ const redrawStage4 = () => {
 let mainTask;
 let mainTaskDone = false
 const redrawStage5 = async () => {
-	term.clear()
-	await mainTask
-	mainTaskDone = true
-	term('\n\n\n')
-	term.bold.underline("Done! Press any key to close this interface.")
+	if (!mainTaskDone) {
+		term.clear()
+		await mainTask
+		mainTaskDone = true
+		term('\n\n\n')
+		term.bold.underline("Done! Press any key to close this interface.")
+	}
 }
 
 term.on('key', (name) => {
@@ -114,11 +116,11 @@ term.on('key', (name) => {
 			selectedMode = Math.min(modeList.length - 1, selectedMode + 1)
 		if (name === 'ENTER') {
 			stage = 2
-			if (modeList[selectedMode] === 'keyframes')
+			if (modeList[selectedMode] === 'Keyframes')
 				keysToFlags['x'] = '--keyframes'
-			else if (modeList[selectedMode] === 'bounce' || modeList[selectedMode] === 'shutter')
+			else if (modeList[selectedMode] === 'Bounce' || modeList[selectedMode] === 'Shutter')
 				keysToFlags['x'] = '--tempo'
-			else if (modeList[selectedMode] === 'angle')
+			else if (modeList[selectedMode] === 'Angle')
 				keysToFlags['x'] = '--angle'
 		}
 	} else if (stage === 2) {
@@ -137,16 +139,23 @@ term.on('key', (name) => {
 			else
 				currentText += name
 		} else if (editingText && name === 'ENTER') {
-			editingText = false
-			flags[currentEdit] = currentText
-			currentEdit = undefined
-			currentText = ''
+			if (currentText === "")
+			{
+				currentText = ""
+				editingText = false
+				currentEdit = undefined
+			} else {
+				editingText = false
+				flags[currentEdit] = currentText
+				currentEdit = undefined
+				currentText = ''
+			}
 		} else if (keysToFlags[name] !== undefined) {
 			editingText = true
 			currentEdit = keysToFlags[name]
 			currentText = flags[keysToFlags[name]] ?? ''
 		} else if (name === 'ENTER') {
-			if (modeList[selectedMode] === 'keyframes' && flags['--keyframes'] === undefined)
+			if (modeList[selectedMode] === 'Keyframes' && flags['--keyframes'] === undefined)
 				return redrawStage2() || term('\n\nYou need to set the keyframes argument.')
 			stage = 3
 		}
