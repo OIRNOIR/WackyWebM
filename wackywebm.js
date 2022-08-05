@@ -305,11 +305,11 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		sameSizeCount = 0,
 		totalFramesDone = 0
 
-	const startTime = Date.now();
+	const startTime = Date.now()
 	process.stdout.write(`Converting frames to webm...`)
 
 	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
-	const maxSegmentLength = Math.floor(frameCount / maxThread);
+	const maxSegmentLength = Math.floor(frameCount / maxThread)
 
 	// Creates the respective resized frame based on the selected mode.
 	for (const { file } of tempFramesFrames) {
@@ -331,7 +331,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 				const vfCommand = frameBounds.command ?? `-vf scale=${lastWidth}x${lastHeight} -aspect ${lastWidth}:${lastHeight}`
 				// 10 frames for one thread
 				const threadUse = Math.min(maxThread, Math.ceil(sameSizeCount / 10))
-				const startFrame = frame - sameSizeCount + 1;
+				const startFrame = frame - sameSizeCount + 1
 				const inputFile = path.join(workLocations.tempFrames, '%d.png')
 				const outputFileName = path.join(workLocations.tempResizedFrames, file + '.webm')
 				const command = `ffmpeg -y -r ${framerate} -start_number ${startFrame} -i "${inputFile}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads ${threadUse} -f webm "${outputFileName}"`
@@ -344,7 +344,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 						return false
 					}
 					return true
-				});
+				})
 				// Wait if subProcess is full
 				//TODO: figure out a smarter way to just wait for *any* thread to finish, instead of just the 1st (since the later ones might finish before the 1st in the list)
 				if (threadUseCount >= maxThread) {
@@ -382,7 +382,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 				}
 
 				// Output log
-				const framePad = String(sameSizeCount).padStart((Math.log10(frameCount) + 1) | 0);
+				const framePad = String(sameSizeCount).padStart((Math.log10(frameCount) + 1) | 0)
 				process.stdout.clearLine()
 				process.stdout.cursorTo(0)
 				process.stdout.write(`Converting ${framePad} frames to webm (frames ${frame}-${frame + sameSizeCount - 1} / ${frameCount}) - ${Math.floor((1000 * totalFramesDone) / frameCount) / 10.0}%`)
