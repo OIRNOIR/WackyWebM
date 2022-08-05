@@ -1,10 +1,11 @@
 // spaghetti ahead; beware.
 // i strongly advise no one to ever touch this again unless you're being paid a lot for it.
 
-const term = require('terminal-kit').terminal
-const { modes, arguments } = require('./wackywebm.js')
+const { terminal: term } = require('terminal-kit')
+const path = require('path')
+const { modes, arguments, main } = require('./wackywebm.js')
+const { getFileName } = require('./util')
 const fs = require('fs')
-const { main } = require('./wackywebm')
 
 // 1: select mode to use
 // 2: optional and required flags
@@ -16,7 +17,7 @@ let stage = 1
 term.grabInput()
 
 const modeList = Object.keys(modes)
-let selectedMode = modeList.indexOf('Bounce')
+let selectedMode = modeList.indexOf('bounce')
 const redrawStage1 = () => {
 	term.clear()
 	term.bold.underline('Select Mode to use with arrow keys, confirm with enter.\n\n')
@@ -47,7 +48,7 @@ const keysToFlags = {
 const redrawStage2 = () => {
 	term.clear()
 	if (currentEdit === undefined) {
-		term.bold.underline(`to change any options (all of which ${modeList[selectedMode] === 'Keyframes' ? 'except the keyframe file ' : ''}are optional), press the corresponding button. When you are done, press enter.\n\n`)
+		term.bold.underline(`to change any options (all of which ${modeList[selectedMode] === 'keyframes' ? 'except the keyframe file ' : ''}are optional), press the corresponding button. When you are done, press enter.\n\n`)
 		// the process of figuring out which options to display here could possibly be automated, but it seems too much
 		// trouble for the marginal benefit, considering how rarely new ones get added.
 		for (const key of Object.keys(keysToFlags)) {
@@ -116,11 +117,11 @@ term.on('key', (name) => {
 			selectedMode = Math.min(modeList.length - 1, selectedMode + 1)
 		if (name === 'ENTER') {
 			stage = 2
-			if (modeList[selectedMode] === 'Keyframes')
+			if (modeList[selectedMode] === 'keyframes')
 				keysToFlags['x'] = '--keyframes'
-			else if (modeList[selectedMode] === 'Bounce' || modeList[selectedMode] === 'Shutter')
+			else if (modeList[selectedMode] === 'bounce' || modeList[selectedMode] === 'shutter')
 				keysToFlags['x'] = '--tempo'
-			else if (modeList[selectedMode] === 'Angle')
+			else if (modeList[selectedMode] === 'angle')
 				keysToFlags['x'] = '--angle'
 		}
 	} else if (stage === 2) {
@@ -155,7 +156,7 @@ term.on('key', (name) => {
 			currentEdit = keysToFlags[name]
 			currentText = flags[keysToFlags[name]] ?? ''
 		} else if (name === 'ENTER') {
-			if (modeList[selectedMode] === 'Keyframes' && flags['--keyframes'] === undefined)
+			if (modeList[selectedMode] === 'keyframes' && flags['--keyframes'] === undefined)
 				return redrawStage2() || term('\n\nYou need to set the keyframes argument.')
 			stage = 3
 		}
@@ -192,9 +193,9 @@ term.on('key', (name) => {
 				flags['--compression'] = 0
 			if (!flags['--output'])
 				// not perfect, but works well enough
-				flags['--output'] = `${filename}_${modeList[selectedMode]}.webm`
+				flags['--output'] = `${path.join(path.dirname(filename), getFileName(filename))}_${modeList[selectedMode]}.webm`
 
-			mainTask = main(modeList[selectedMode], filename, flags['--keyframes'], flags['--bitrate'], flags['--thread'], flags['--tempo'], flags['--angle'], flags['--compression'], flags['--output'])
+			mainTask = main([modeList[selectedMode]], filename, flags['--keyframes'], flags['--bitrate'], flags['--thread'], flags['--tempo'], flags['--angle'], flags['--compression'], flags['--output'])
 		} else if (stage === 5) {
 			if (mainTaskDone)
 				process.exit(0)
