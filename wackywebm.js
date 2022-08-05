@@ -299,7 +299,14 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		maxWidth,
 		maxHeight,
 		frameCount,
+		frameRate: decimalFramerate
+	}, baseInfoObject = {
+		maxWidth,
+		maxHeight,
+		frameCount,
 		frameRate: decimalFramerate,
+		tempo,
+		angle
 	}
 
 	// Setup modes
@@ -325,26 +332,11 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 
 	// Creates the respective resized frame based on the selected mode.
 	for (const { file } of tempFramesFrames) {
-		const infoObject = {
-			frame: frame,
-			maxWidth: maxWidth,
-			maxHeight: maxHeight,
-			frameCount: frameCount,
-			frameRate: decimalFramerate,
-			tempo: tempo,
-			angle: angle,
-		}
+		const infoObject = Object.assign({ frame }, baseInfoObject)
 
-		const frameBounds = {}
-		for (const mode of selectedModes) {
-			const current = modes[mode].getFrameBounds(infoObject)
-			if (current.width !== undefined) frameBounds.width = current.width
-			if (current.height !== undefined) frameBounds.height = current.height
-			if (current.command !== undefined) frameBounds.command = current.command
-		}
-
-		if (frameBounds.width === undefined) frameBounds.width = maxWidth
-		if (frameBounds.height === undefined) frameBounds.height = maxHeight
+		const frameBounds = { width: maxWidth, height: maxHeight }
+		for (const mode of selectedModes)
+			Object.assign(frameBounds, modes[mode].getFrameBounds(infoObject))
 
 		if (frame === 0) {
 			lastWidth = frameBounds.width
@@ -397,7 +389,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 				if (frame === frameCount - 1) {
 					const lastFrameOutputName = path.join(workLocations.tempResizedFrames, 'end.webm')
 					const vfCommand = frameBounds.command ?? `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`
-					console.log(vfCommand)
+					//console.log(vfCommand)
 					const newProcess = execAsync(
 						`ffmpeg -y -r ${framerate} -start_number ${frame + 1} -i "${inputFile}" -frames:v 1 -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads 1 -f webm "${lastFrameOutputName}"`,
 						{ maxBuffer: 1024 * 1000 * 8 }).then(() => newProcess.done = true)
