@@ -1,6 +1,7 @@
 // please only put things here that will be used by *multiple* modes, so as not to clutter the file too much.
 
 const util = require('util')
+const path = require('path')
 // These could be arguments, as well. They could also be taken via user input with readline.
 const delta = 1
 
@@ -38,6 +39,8 @@ async function getAudioLevelMap(videoPath) {
 	return intermediateMap
 }
 
+const getFileName = (p) => path.basename(p, path.extname(p))
+
 const WARN = `\n[WARNING] %s\n`
 const ERROR = `\n[ERROR] %s\n`
 const orgConsoleWarn = console.warn
@@ -45,4 +48,4 @@ const orgConsoleError = console.error
 console.warn = (m) => orgConsoleWarn(WARN, m)
 console.error = (m) => orgConsoleError(ERROR, m)
 
-module.exports = { delta, getAudioLevelMap }
+module.exports = { delta, getAudioLevelMap, getFileName }
