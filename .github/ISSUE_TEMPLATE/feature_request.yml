@@ -1,0 +1,46 @@
+name: Feature request
+description: Suggest an idea for this project
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        * We welcome any ideas or feature requests! It is helpful if you can explain exactly why the feature would be useful.
+  - type: input
+    id: Area
+    attributes:
+      label: Related area
+      description: Please briefly explain the area of your Feature Request.
+      placeholder: eg. New mode, script adjustment, other feature
+    validations:
+      required: true
+  - type: textarea
+    id: problem-related
+    attributes:
+      label: Is your feature request related to a problem?
+      description: Please provide a clear and concise description of what the problem is. Add relevant issue link.
+      placeholder: ex. I'm facing the issue/missing function...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: Please provide a clear and concise description of what you want to happen.
+      placeholder: ex. When using this function...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Please add any other context or screenshots about the feature request here.
+      placeholder: ex. This would work only when ...
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: I have checked existing list of Feature requests
+      description: You agree to check all the resources above before opening a new Feature request.
+      options:
+        - label: I confirm I have checked existing list of Feature requests
+          required: true
