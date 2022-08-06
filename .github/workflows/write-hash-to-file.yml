@@ -18,6 +18,7 @@ jobs:
           token: ${{ secrets.ACCESS_TOKEN }}
       - run: |
           git rev-parse HEAD > hash
+          echo ${{ github.repository_owner }} >> hash
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add hash

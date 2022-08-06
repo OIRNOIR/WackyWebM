@@ -214,7 +214,8 @@ function ffmpegErrorHandler(e) {
 async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath) {
 	if (updateCheck) {
 		// before doing anything else, so it gets displayed even in case of error, check if we have the latest version.
-		const ourHash = fs.existsSync(path.join(__dirname, 'hash')) ? fs.readFileSync(path.join(__dirname, 'hash')).toString().trim() : 'string that never matches any git commit hash.';
+		let ourVersion = fs.existsSync(path.join(__dirname, 'hash')) ? fs.readFileSync(path.join(__dirname, 'hash')).toString().trim() : 'string that never matches any git commit hash.\ngithub user that does not exist!"§%$&';
+		ourVersion = ourVersion.replace(/\r/g, '').split('\n')
 		const https = require('https')
 		https.get[util.promisify.custom] = (URL) => {
 			return new Promise((res, rej) => {
@@ -232,8 +233,8 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 			})
 		}
 		const promiseGet = util.promisify(https.get)
-		const upStreamHash = await promiseGet('https://raw.githubusercontent.com/OIRNOIR/WackyWebM/main/hash')
-		if (upStreamHash.trim() !== ourHash.trim()) {
+		const upStreamHash = await promiseGet(`https://raw.githubusercontent.com/${ourVersion[1]}/WackyWebM/main/hash`)
+		if (upStreamHash.trim() !== ourVersion[0].trim()) {
 			console.log("A newer version is available! If you are experiencing issues, please consider updating.");
 		}
 	}
