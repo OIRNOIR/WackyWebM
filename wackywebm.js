@@ -122,7 +122,7 @@ function parseCommandArguments() {
 				}
 			}
 			if (!argFound) {
-				console.error(`Argument "${arg}" cant be set`)
+				console.error(`Argument "${arg}" can't be set`)
 				return displayUsage()
 			}
 			continue
@@ -139,19 +139,19 @@ function parseCommandArguments() {
 	}
 
 	// not a single positional argument, we need at least 1
-	if (selectedModes === undefined) {
+	if (selectedModes.length === 0) {
 		selectedModes = ['bounce']
-		console.warn(`Mode not selected, using default "${selectedModes[0]}".`)
+		console.warn(`Mode not selected, using default "${selectedModes.join('+')}".`)
 	}
 	// Keyframes mode selected without providing keyframe file
-	if (selectedModes.includes('Keyframes') && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
+	if (selectedModes.includes('keyframes') && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
 		if (keyFrameFile) console.error(`Keyframes file not found. "${keyFrameFile}"`)
 		else console.error(`Keyframes file not given.`)
 		return displayUsage()
 	}
 
 	// got 1 positional argument, which was the mode to use - no file path!
-	if (videoPath === undefined) {
+	if (videoPath.length === 0) {
 		console.error('Video file not given.')
 		return displayUsage()
 	}
