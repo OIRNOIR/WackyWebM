@@ -229,6 +229,8 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 					response.on('end', () => {
 						res(data)
 					})
+				}).on('error', (e) => {
+					rej(e)
 				})
 			})
 		}
