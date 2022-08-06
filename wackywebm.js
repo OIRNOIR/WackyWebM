@@ -55,8 +55,7 @@ const argsConfig = [
 	},
 	{
 		keys: ['-b', '--bitrate'],
-		// Default bitrate: 1M
-		default: () => (bitrate = '1M'),
+		default: () => (bitrate = null),
 		call: (val) => (bitrate = val),
 		getValue: () => bitrate,
 		description: 'sets the maximum bitrate of the video. Lowering this might reduce file size.',
@@ -220,15 +219,16 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 Input file: ${videoPath}.
 Using minimum w/h ${delta}px.
 Extracting necessary input file info...`)
-	const videoInfo = await execAsync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+	const videoInfo = await execAsync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames,bit_rate "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	// Deconstructor extracts these values and renames them.
 	let {
-		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate, nb_read_frames: frameCount }],
+		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate, nb_read_frames: frameCount, bit_rate: originalBitrate }],
 	} = JSON.parse(videoInfo.stdout.trim())
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
 	frameCount = Number(frameCount)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
+	if (bitrate == null) bitrate = originalBitrate;
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
 	console.log(`\
