@@ -233,7 +233,8 @@ Extracting necessary input file info...`)
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
 	console.log(`\
 Resolution is ${maxWidth}x${maxHeight}.
-Framerate is ${framerate} (${decimalFramerate}).`)
+Framerate is ${framerate} (${decimalFramerate}).
+Input Bitrate is ${originalBitrate}.`)
 
 	// Print config
 	console.log(`============Config============`)
