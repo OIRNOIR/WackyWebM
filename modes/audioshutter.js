@@ -9,7 +9,7 @@ module.exports = {
 	getFrameBounds: (info) => {
 		const { percentMax } = audioMap[Math.max(Math.min(Math.floor((info.frame / (info.frameCount - 1)) * audioMapL), audioMapL), 0)]
 		return {
-			width: info.frame === 1 ? info.maxWidth : Math.max(Math.floor(Math.abs(info.maxWidth * percentMax)), util.delta),
+			width: info.frame === 0 ? info.maxWidth : Math.max(Math.floor(Math.abs(info.maxWidth * percentMax)), util.delta),
 		}
 	},
 }

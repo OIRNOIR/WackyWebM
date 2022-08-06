@@ -318,7 +318,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		for (const mode of selectedModes)
 			Object.assign(frameBounds, modes[mode].getFrameBounds(infoObject))
 
-		if (frame === 1) {
+		if (frame === 0) {
 			lastWidth = frameBounds.width
 			lastHeight = frameBounds.height
 		}

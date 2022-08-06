@@ -10,7 +10,7 @@ module.exports = {
 		orgHeight = info.maxHeight
 	},
 	getFrameBounds: (info) => {
-		if (info.frame === 1) {
+		if (info.frame === 0) {
 			const maxSize = Math.floor(info.maxWidth * Math.abs(Math.cos(Math.PI / 4)) + info.maxHeight * Math.abs(Math.sin(Math.PI / 4))) + util.delta
 			return {
 				width: maxSize,
