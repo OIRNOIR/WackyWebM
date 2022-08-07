@@ -242,6 +242,7 @@ Input Bitrate is ${originalBitrate}.`)
 	if (selectedModes.includes('bounce') || selectedModes.includes('shutter')) console.log(`Bounce speed: ${tempo} times per second`)
 	else if (selectedModes.includes('rotate')) console.log(`Rotating speed: ${angle} deg per second`)
 	else if (selectedModes.includes('keyframes')) console.log(`Keyframe file: ${keyFrameFile}`)
+	if (bitrate != originalBitrate) console.log(`Output bitrate: ${bitrate}`)
 	console.log(`==============================`)
 
 	// Create temp folder
