@@ -1,3 +1,5 @@
+'use strict'
+
 // please only put things here that will be used by *multiple* modes, so as not to clutter the file too much.
 
 const util = require('util')

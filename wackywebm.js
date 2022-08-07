@@ -439,7 +439,7 @@ Input Bitrate is ${originalBitrate}.`)
 	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
 
-module.exports = { modes, main, arguments: argsConfig, run: main }
+module.exports = { modes, main, args: argsConfig, run: main }
 
 // recommended way to check if this file is the entry point, as per
 // https://nodejs.org/api/deprecations.html#DEP0144

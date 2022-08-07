@@ -1,9 +1,11 @@
+'use strict'
+
 // spaghetti ahead; beware.
 // i strongly advise no one to ever touch this again unless you're being paid a lot for it.
 
 const { terminal: term } = require('terminal-kit')
 const path = require('path')
-const { modes, arguments, main } = require('./wackywebm.js')
+const { modes, args, main } = require('./wackywebm.js')
 const { getFileName } = require('./util')
 const fs = require('fs')
 
@@ -53,7 +55,7 @@ const redrawStage2 = () => {
 		// trouble for the marginal benefit, considering how rarely new ones get added.
 		for (const key of Object.keys(keysToFlags)) {
 			term.italic(key)
-			term(`: ${arguments.filter(a => a.keys.includes(keysToFlags[key]))[0].description}\n`)
+			term(`: ${args.filter(a => a.keys.includes(keysToFlags[key]))[0].description}\n`)
 		}
 
 		term.bold.underline(`\ncurrently set argument values:\n`)
