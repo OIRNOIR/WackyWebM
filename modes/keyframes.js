@@ -56,7 +56,10 @@ let keyFrames = []
 async function parseKeyFrameFile(keyFrameFile, framerate, originalWidth, originalHeight) {
 	const content = (await fs.promises.readFile(keyFrameFile)).toString()
 	// currently, whitespace except newlines *never* serves a syntactic function, so we can just remove it at the start.
-	const lines = content.split('\n').map(l => l.replace(/\s/g, '')).filter((s) => s !== '' && s[0] !== "#")
+	const lines = content
+		.split('\n')
+		.map((l) => l.replace(/\s/g, ''))
+		.filter((s) => s !== '' && s[0] !== '#')
 	let data = lines.map((l) => l.split(','))
 	data = data.map((line) => {
 		let time = line[0].split(/[:.-]/)
@@ -66,7 +69,7 @@ async function parseKeyFrameFile(keyFrameFile, framerate, originalWidth, origina
 		const width = infixToPostfix(line[1])
 		const height = infixToPostfix(line[2])
 
-		let interpolation = line[3] ?? "linear"
+		let interpolation = line[3] ?? 'linear'
 
 		return { time: parsedTime, width, height, interpolation }
 	})
@@ -91,8 +94,7 @@ async function parseKeyFrameFile(keyFrameFile, framerate, originalWidth, origina
 				else if (postfix[i] === '/') {
 					const b = queue.pop()
 					queue.push(queue.pop() / b)
-				}
-				else if (postfix[i].toLowerCase() === 'lastwidth') queue.push(data[dataIndex - 1].width)
+				} else if (postfix[i].toLowerCase() === 'lastwidth') queue.push(data[dataIndex - 1].width)
 				else if (postfix[i].toLowerCase() === 'lastheight') queue.push(data[dataIndex - 1].height)
 				else if (postfix[i].toLowerCase() === 'last') queue.push(data[dataIndex - 1][evaluatingHeight ? 'height' : 'width'])
 				else if (postfix[i].toLowerCase() === 'original') queue.push(evaluatingHeight ? originalHeight : originalWidth)
