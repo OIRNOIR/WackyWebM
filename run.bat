@@ -14,5 +14,8 @@ REM Print Ascii Art
 echo Installing Dependencies - this might take a while the first time.
 call npm i
 
+echo Enter the language you want to use, or press enter for the default (english)
+set /p "lang= "
+
 echo Starting UI
-npm run terminal_ui
+npm run terminal_ui -- %lang%
