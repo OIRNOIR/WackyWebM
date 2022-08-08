@@ -17,5 +17,13 @@ module.exports = {
 	// leave "%s" in these; it gets replaced by the relevant warning/error at runtime
 	warning_template: "[WARNING] %s",
 	error_template: "[ERROR] %s",
-	parsing_keyframes: 'Parsing Keyframe File {file}...'
+	parsing_keyframes: 'Parsing Keyframe File {file}...',
+	load_mode_failed: 'mode: {mode} load failed',
+	flag_locale_desc: 'Sets the used language',
+	illegal_argument: 'Illegal argument: {arg}',
+	arg_cannot_be_set: 'Argument {arg} cannot be set.',
+	no_mode_selected: 'No mode selected, using default "{default}"',
+	kf_file_not_found: 'KeyFrame file {file} was not found.',
+	kf_file_required: 'KeyFrame file is required, but none was given.',
+	no_video_file: 'No input video file was given.'
 }

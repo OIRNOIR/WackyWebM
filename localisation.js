@@ -1,7 +1,5 @@
 const path = require('path')
 const fs = require('fs')
-// to modify console.warn & console.error
-require('./util.js')
 
 const translations = []
 const localesDir = path.join(__dirname, 'localisations')

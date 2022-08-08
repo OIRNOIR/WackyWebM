@@ -11,6 +11,7 @@ const fs = require('fs')
 const util = require('util')
 // I'll admit, inconvenient naming here.
 const { delta, getFileName } = require('./util')
+const { localiseString, setLocale } = require('./localisation')
 const execAsync = util.promisify(require('child_process').exec)
 
 const modes = {}
@@ -20,7 +21,7 @@ for (const modeFile of fs.readdirSync(modesDir).filter((file) => file.endsWith('
 		let modeName = getFileName(modeFile).toLowerCase()
 		modes[modeName] = require(path.join(modesDir, modeFile))
 	} catch (e) {
-		console.warn(`mode: ${getFileName(modeFile)} load failed`)
+		console.warn(localiseString('load_mode_failed', { mode: getFileName(modeFile) }))
 	}
 }
 
@@ -37,6 +38,10 @@ let selectedModes = [],
 	compressionLevel = undefined
 
 // NOTE! if you add a new option, please check out if anything needs to be added for it into terminal-ui.js
+
+// TODO localise the arguments' descriptions (and add translation keys for them)
+// along with this, probably localise the usage help
+// this would be especially helpful for terminal-ui users.
 const argsConfig = [
 	{
 		keys: ['-h', '--help'],
@@ -96,6 +101,14 @@ const argsConfig = [
 		getValue: () => compressionLevel,
 		description: 'sets compression level (higher value means more compression)',
 	},
+	{
+		keys: ['-l', '--language'],
+		default: () => { },
+		call: (l) => (setLocale(l)),
+		// allows for more than one -l flag, but i don't think it's worth exposing "currentLocale" just for this
+		getValue: () => undefined,
+		description: 'Sets the used language',
+	},
 ]
 
 function parseCommandArguments() {
@@ -107,9 +120,9 @@ function parseCommandArguments() {
 			let argFound = false
 			for (const j of argsConfig) {
 				if (j.keys.includes(arg)) {
-					// need vale but no argument after || set argument value twice
+					// need value but no argument after                    || set argument value twice
 					if ((!j.noValueAfter && i === process.argv.length - 1) || (j.getValue && j.getValue() !== undefined)) {
-						console.error(`Illegal argument: ${arg}`)
+						console.error(localiseString("arg_cannot_be_set", { arg }))
 						return displayUsage()
 					}
 					if (j.noValueAfter)
@@ -121,7 +134,7 @@ function parseCommandArguments() {
 				}
 			}
 			if (!argFound) {
-				console.error(`Argument "${arg}" can't be set`)
+				console.error(localiseString('illegal_argument', { arg }))
 				return displayUsage()
 			}
 			continue
@@ -140,18 +153,18 @@ function parseCommandArguments() {
 	// not a single positional argument, we need at least 1
 	if (selectedModes.length === 0) {
 		selectedModes = ['bounce']
-		console.warn(`Mode not selected, using default "${selectedModes.join('+')}".`)
+		console.warn(localiseString('no_mode_selected', { default: selectedModes.join('+')}))
 	}
 	// Keyframes mode selected without providing keyframe file
 	if (selectedModes.includes('keyframes') && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
-		if (keyFrameFile) console.error(`Keyframes file not found. "${keyFrameFile}"`)
-		else console.error(`Keyframes file not given.`)
+		if (keyFrameFile) console.error(localiseString('kf_file_not_found', { file: keyFrameFile }))
+		else console.error(localiseString('kf_file_required'))
 		return displayUsage()
 	}
 
 	// got 1 positional argument, which was the mode to use - no file path!
 	if (videoPath.length === 0) {
-		console.error('Video file not given.')
+		console.error(localiseString('no_video_file'))
 		return displayUsage()
 	}
 	else videoPath = videoPath.join(' ')
