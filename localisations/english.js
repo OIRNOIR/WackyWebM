@@ -46,5 +46,7 @@ module.exports = {
 	writing_concat_file: 'Writing concat file...',
 	concatenating: 'Concatenating segments into final webm file',
 	concatenating_audio: 'Concatenating segments and applying audio to final webm file',
-	done_removing_temp: 'Done!\nRemoving temporary files...'
+	done_removing_temp: 'Done!\nRemoving temporary files...',
+	error_during_update: 'An error has occured while attempting to check for updates: {error}',
+	newer_version_available: 'A newer version is available. Please consider updating.'
 }

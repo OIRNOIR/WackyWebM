@@ -254,10 +254,10 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 			const upStreamHash = await promiseGet(`https://raw.githubusercontent.com/${ourVersion[1]}/WackyWebM/main/hash`)
 
 			if (upStreamHash.trim() !== ourVersion[0].trim()) {
-				console.log("A newer version is available! If you are experiencing issues, please consider updating.");
+				console.log(localiseString('newer_version_available'));
 			}
 		} catch (e) {
-			console.warn(`Error occured while trying to check for updates: ${e}`)
+			console.warn(localiseString('error_during_update', { error: e }))
 		}
 	}
 
