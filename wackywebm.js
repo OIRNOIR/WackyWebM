@@ -228,7 +228,7 @@ Extracting necessary input file info...`)
 	maxHeight = Number(maxHeight)
 	frameCount = Number(frameCount)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
-	if (bitrate == null) bitrate = Math.min(originalBitrate, 1000000);
+	if (bitrate == null) bitrate = Math.min(originalBitrate ?? 500000, 1000000);
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
 	console.log(`\
