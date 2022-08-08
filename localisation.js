@@ -3,34 +3,32 @@ const fs = require('fs')
 // to modify console.warn & console.error
 require('./util.js')
 
-const translations = {}
+const translations = []
 const localesDir = path.join(__dirname, 'localisations')
 for (const locale of fs.readdirSync(localesDir).filter((file) => file.endsWith('.js'))) {
 	try {
-		const localeObject = require(path.join(localesDir, locale))
-		for (const a in localeObject.aliases)
-			// this is not as terrible for memory usage as it looks at first glance; we are assigning the same reference
-			// to all aliases, not a new copy each time.
-			translations[a] = localeObject
+		translations.push(require(path.join(localesDir, locale)))
 	} catch (e) {
 		console.warn(`loading translation file ${locale} failed`)
 	}
 }
 
-let currentLocale = 'en_us'
+let fallBackLocale = translations.filter(x => x.aliases.some(alias => alias.constructor.name === 'RegExp' ? alias.test('en_us') : alias === 'en_us'))[0]
+
+let currentLocale = fallBackLocale
 function setLocale(l) {
-	currentLocale = l
+	l = l.toString().toLowerCase()
+	console.warn(`No Locale Matching "${l}" found, using "en-us"`)
+	currentLocale = translations.filter(x => x.aliases.some(alias => alias.constructor.name === 'RegExp' ? alias.test(l) : alias === l))[0] ?? fallBackLocale
 }
 
-let fallBackLocale = translations[Object.keys(translations).filter(x => x.constructor.name === 'RegExp' ? x.test('en_us') : x === 'en_us')]
+function localiseString(key, args = {}) {
+	key = key.toString().toLowerCase().replace(/[- ]/g, '_')
+	let rawTranslation = currentLocale[key] ?? fallBackLocale[key] ?? fallBackLocale['no_translation']
+	for (const replaceKey of Object.keys(args))
+		rawTranslation = rawTranslation.replaceAll(`{${replaceKey.toLowerCase()}}`, args[replaceKey])
 
-function localiseString(key) {
-	key = key.toString()
-	for (const locale of Object.keys(translations)) {
-		if ((locale.constructor.name === 'RegExp' && locale.test(currentLocale)) || locale === currentLocale)
-			return translations[locale][key] ?? translations[locale]["no_translation"]
-	}
-	// no locale matching currentLocale found
-	console.warn(`No Locale Matching "${currentLocale}" found, using "en-us"`)
-	return fallBackLocale[key]
+	return rawTranslation
 }
+
+module.exports = { setLocale, localiseString }

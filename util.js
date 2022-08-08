@@ -4,6 +4,7 @@
 
 const util = require('util')
 const path = require('path')
+const { localiseString } = require('./localisation')
 // These could be arguments, as well. They could also be taken via user input with readline.
 const delta = 1
 
@@ -43,8 +44,8 @@ async function getAudioLevelMap(videoPath) {
 
 const getFileName = (p) => path.basename(p, path.extname(p))
 
-const WARN = `\n[WARNING] %s\n`
-const ERROR = `\n[ERROR] %s\n`
+const WARN = `\n${localiseString('warning_template')}\n`
+const ERROR = `\n${localiseString('error_template')}\n`
 const orgConsoleWarn = console.warn
 const orgConsoleError = console.error
 console.warn = (m) => orgConsoleWarn(WARN, m)
