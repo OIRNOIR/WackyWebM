@@ -34,7 +34,8 @@ let selectedModes = [],
 	maxThread = undefined,
 	tempo = undefined,
 	angle = undefined,
-	compressionLevel = undefined
+	compressionLevel = undefined,
+	updateCheck = true
 
 // NOTE! if you add a new option, please check out if anything needs to be added for it into terminal-ui.js
 const argsConfig = [
@@ -96,6 +97,12 @@ const argsConfig = [
 		getValue: () => compressionLevel,
 		description: 'sets compression level (higher value means more compression)',
 	},
+	{
+		keys: ['--no-update-check'],
+		noValueAfter: true,
+		call: () => ( updateCheck = false ),
+		description: 'disables the automatic update check',
+	}
 ]
 
 function parseCommandArguments() {
@@ -204,6 +211,43 @@ function ffmpegErrorHandler(e) {
 }
 
 async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath) {
+	if (updateCheck) {
+		// before doing anything else, so it gets displayed even in case of error, check if we have the latest version.
+		let ourVersion = fs.existsSync(path.join(__dirname, 'hash')) ? fs.readFileSync(path.join(__dirname, 'hash')).toString().trim() : 'string that never matches any git commit hash.\ngithub user that does not exist!"§%$&';
+		ourVersion = ourVersion.replace(/\r/g, '').split('\n')
+		const https = require('https')
+		https.get[util.promisify.custom] = (URL) => {
+			return new Promise((res, rej) => {
+				https.get(URL, response => {
+					let data = ''
+
+					response.on('data', (chunk) => {
+						data += chunk;
+					})
+
+					response.on('end', () => {
+						res(data)
+					})
+				}).on('error', (e) => {
+					rej(e)
+				}).setTimeout(5000, () => {
+					rej(new Error("Timeout"))
+				})
+			})
+		}
+		const promiseGet = util.promisify(https.get)
+
+		try {
+			const upStreamHash = await promiseGet(`https://raw.githubusercontent.com/${ourVersion[1]}/WackyWebM/main/hash`)
+
+			if (upStreamHash.trim() !== ourVersion[0].trim()) {
+				console.log("A newer version is available! If you are experiencing issues, please consider updating.");
+			}
+		} catch (e) {
+			console.warn(`Error occured while trying to check for updates: ${e}`)
+		}
+	}
+
 	// Verify the given path is accessible.
 	if (!videoPath || !fs.existsSync(videoPath)) {
 		if (videoPath) console.error(`Video file not found. "${videoPath}"`)
