@@ -17,4 +17,5 @@ module.exports = {
 	// leave "%s" in these; it gets replaced by the relevant warning/error at runtime
 	warning_template: "[WARNING] %s",
 	error_template: "[ERROR] %s",
+	parsing_keyframes: 'Parsing Keyframe File {file}...'
 }
