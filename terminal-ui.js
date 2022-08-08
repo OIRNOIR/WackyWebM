@@ -91,7 +91,7 @@ const redrawStage4 = () => {
 	term(` ${filename}\n`)
 }
 
-let mainTask;
+let mainTask
 let mainTaskDone = false
 const redrawStage5 = async () => {
 	if (!mainTaskDone) {
