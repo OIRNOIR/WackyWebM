@@ -1,0 +1,26 @@
+name: write last commit hash to file
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+    paths:
+      - '**'
+      - '!hash'
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }}
+      - run: |
+          git rev-parse HEAD > hash
+          echo ${{ github.repository_owner }} >> hash
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add hash
+          git commit -m "automatically wrote commit hash to file"
+          git push
