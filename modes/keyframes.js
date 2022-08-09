@@ -112,6 +112,7 @@ async function parseKeyFrameFile(keyFrameFile, framerate, originalWidth, origina
 
 	keyFrames = data
 }
+
 // various kinds of interpolation go here.
 function lerp(a, b, t) {
 	// convert the inputs to floats for accuracy, then convert the result back to an integer at the end
@@ -129,6 +130,13 @@ module.exports = {
 		if (lastKf !== keyFrames.length - 1 && info.frame >= keyFrames[lastKf + 1].time) {
 			lastKf++
 		}
+
+		// if there is still a keyframe to skip, there were multiple on one frame. consume those and warn the user.
+		while (lastKf !== keyFrames.length - 1 && info.frame >= keyFrames[lastKf + 1].time) {
+			lastKf++
+			console.warn(localizeString('excess_keyframes', { time: keyFrames[lastKf].time }))
+		}
+
 		if (lastKf === keyFrames.length - 1)
 			return {
 				width: keyFrames[lastKf].width,
@@ -136,12 +144,34 @@ module.exports = {
 			}
 
 		const t = (info.frame - keyFrames[lastKf].time) / (keyFrames[lastKf + 1].time - keyFrames[lastKf].time)
+
+		let [lastWidth, lastHeight] = [keyFrames[lastKf].width, keyFrames[lastKf].height]
+		let [nextWidth, nextHeight] = [keyFrames[lastKf].width, keyFrames[lastKf].height]
+
+		if (keyFrames[lastKf + 1].interpolation.toLowerCase() === 'instant') {
+			// interpolate towards current size, instead of next one
+			// we do not just immediately return lastWidth and lastHeight here to prepare for possible future interpolations
+			// which might intentionally overshoot the target size and then bounce back - they should still do that, as long
+			// as they arrive at the right size.
+			nextWidth = lastWidth
+			nextHeight = lastHeight
+		}
+
 		switch (keyFrames[lastKf].interpolation.toLowerCase()) {
 			case 'linear':
 				return {
-					width: lerp(keyFrames[lastKf].width, keyFrames[lastKf + 1].width, t),
-					height: lerp(keyFrames[lastKf].height, keyFrames[lastKf + 1].height, t),
+					width: lerp(lastWidth, nextWidth, t),
+					height: lerp(lastHeight, nextHeight, t),
+				}
+			case 'instant':
+				return {
+					width: lastWidth,
+					height: lastHeight
 				}
 		}
+
+		// unrecognized mode
+		console.error(localizeString('unrecognized_interpolation', { which: keyFrames[lastKf].interpolation }))
+		return { width: info.maxWidth, height: info.maxHeight }
 	},
 }
