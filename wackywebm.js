@@ -13,8 +13,6 @@ const util = require('util')
 const { delta, getFileName } = require('./util')
 const { localizeString, setLocale } = require('./localization')
 const execAsync = util.promisify(require('child_process').exec)
-const UPNG = require('upng-js')
-
 
 const modes = {}
 const modesDir = path.join(__dirname, 'modes')
@@ -375,10 +373,17 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
 	const maxSegmentLength = Math.floor(frameCount / maxThread)
 
+	const loadFrameData = selectedModes.filter(mode => modes[mode].requiresFrameData).length !== 0
+	// only use this if we need it; we don't want everyone to need a dependency, apparently
+	const UPNG = loadFrameData ? undefined : require('upng-js')
+
 	// Creates the respective resized frame based on the selected mode.
 	for (const { file } of tempFramesFrames) {
 		// since it is quite an expensive operation, only load frame data if it's required
-		const frameData = selectedModes.filter(mode => modes[mode].requiresFrameData).length === 0 ? undefined : new Int32Array(UPNG.toRGBA8(UPNG.decode(fs.readFileSync(path.join(workLocations.tempFrames, file))))[0])
+		let frameData = undefined
+		if (loadFrameData) {
+			frameData = new Int32Array(UPNG.toRGBA8(UPNG.decode(fs.readFileSync(path.join(workLocations.tempFrames, file))))[0])
+		}
 		const infoObject = Object.assign({ frame, frameData, frameFilePath: path.join(workLocations.tempFrames, file) }, baseInfoObject)
 
 		const frameBounds = { width: maxWidth, height: maxHeight }

@@ -1,7 +1,6 @@
 'use strict'
 
 const util = require('../util.js')
-const UPNG = require('upng-js')
 const fs = require('fs')
 
 // all of these "find edge" functions are a little repetitive, but i can't think of a way to generalise them that
@@ -49,9 +48,13 @@ function getBottomEdge(threshold, info) {
 	return 0
 }
 
+let UPNG
+
 module.exports = {
 	requiresFrameData: true,
-	setup: () => {},
+	setup: () => {
+		UPNG = require('upng-js')
+	},
 	getFrameBounds: (info) => {
 		const leftEdge = getLeftEdge(info.transparencyThreshold, info)
 		const rightEdge = getRightEdge(info.transparencyThreshold, info)
