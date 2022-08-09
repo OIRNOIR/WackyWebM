@@ -2,6 +2,7 @@
 
 const util = require('../util.js')
 const fs = require('fs')
+const UPNG = require('upng-js')
 
 // all of these "find edge" functions are a little repetitive, but i can't think of a way to generalise them that
 // does not involve passing endless lambdas around, which I don't think would help readability any more than just having
@@ -48,13 +49,9 @@ function getBottomEdge(threshold, info) {
 	return 0
 }
 
-let UPNG
-
 module.exports = {
 	requiresFrameData: true,
-	setup: () => {
-		UPNG = require('upng-js')
-	},
+	setup: () => {},
 	getFrameBounds: (info) => {
 		const leftEdge = getLeftEdge(info.transparencyThreshold, info)
 		const rightEdge = getRightEdge(info.transparencyThreshold, info)

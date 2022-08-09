@@ -13,6 +13,7 @@ const util = require('util')
 const { delta, getFileName } = require('./util')
 const { localizeString, setLocale } = require('./localization')
 const execAsync = util.promisify(require('child_process').exec)
+const UPNG = require("upng-js")
 
 const modes = {}
 const modesDir = path.join(__dirname, 'modes')
@@ -232,7 +233,7 @@ function ffmpegErrorHandler(e) {
 	)
 }
 
-async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath) {
+async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, transparencyThreshold, outputPath) {
 	if (updateCheck) {
 		// before doing anything else, so it gets displayed even in case of error, check if we have the latest version.
 		let ourVersion = fs.existsSync(path.join(__dirname, 'hash')) ? fs.readFileSync(path.join(__dirname, 'hash')).toString().trim() : 'string that never matches any git commit hash.\ngithub user that does not exist!"§%$&';
@@ -374,8 +375,6 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	const maxSegmentLength = Math.floor(frameCount / maxThread)
 
 	const loadFrameData = selectedModes.filter(mode => modes[mode].requiresFrameData).length !== 0
-	// only use this if we need it; we don't want everyone to need a dependency, apparently
-	const UPNG = loadFrameData ? undefined : require('upng-js')
 
 	// Creates the respective resized frame based on the selected mode.
 	for (const { file } of tempFramesFrames) {
@@ -516,4 +515,4 @@ if (parseCommandArguments() !== true) return
 
 // we're ignoring a promise (the one returned by main) here. this is by design and not harmful, so ignore the warning
 // noinspection JSIgnoredPromiseFromCall
-main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath)
+main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, transparencyThreshold, outputPath)
