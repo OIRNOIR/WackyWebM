@@ -1,7 +1,7 @@
 'use strict'
 
 // do this before importing wackywebm or util, so that they use our modified locale
-const { setLocale, localiseString } = require('./localisation.js')
+const { setLocale, localizeString } = require('./localization.js')
 
 if (process.argv.length > 2)
 	setLocale(process.argv[2])
@@ -29,7 +29,7 @@ const modeList = Object.keys(modes)
 let selectedMode = modeList.indexOf('bounce')
 const redrawStage1 = () => {
 	term.clear()
-	term.bold.underline(`${localiseString('select_mode_arrows')}\n\n`)
+	term.bold.underline(`${localizeString('select_mode_arrows')}\n\n`)
 	for (let modeIx in modeList) {
 		// i dont know why js decided that iterating over an array's indices should give you strings...
 		modeIx = parseInt(modeIx)
@@ -57,7 +57,7 @@ const keysToFlags = {
 const redrawStage2 = () => {
 	term.clear()
 	if (currentEdit === undefined) {
-		term.bold.underline(`${modeList[selectedMode] === 'keyframes' ? localiseString('change_options_k') : localiseString('change_options')}\n\n`)
+		term.bold.underline(`${modeList[selectedMode] === 'keyframes' ? localizeString('change_options_k') : localizeString('change_options')}\n\n`)
 		// the process of figuring out which options to display here could possibly be automated, but it seems too much
 		// trouble for the marginal benefit, considering how rarely new ones get added.
 		for (const key of Object.keys(keysToFlags)) {
@@ -65,11 +65,11 @@ const redrawStage2 = () => {
 			term(`: ${args.filter(a => a.keys.includes(keysToFlags[key]))[0].description}\n`)
 		}
 
-		term.bold.underline(`\n${localiseString('current_arg_values')}\n`)
+		term.bold.underline(`\n${localizeString('current_arg_values')}\n`)
 		for (const flag of Object.keys(flags))
 			term(`${flag} = "${flags[flag]}"\n`)
 	} else {
-		term.bold.underline(`${localiseString('enter_arg_value', { arg: currentEdit })}\n`)
+		term.bold.underline(`${localizeString('enter_arg_value', { arg: currentEdit })}\n`)
 		term.italic(currentText)
 	}
 
@@ -78,23 +78,23 @@ const redrawStage2 = () => {
 let filename = ''
 const redrawStage3 = () => {
 	term.clear()
-	term.bold.underline(`${localiseString('enter_file_path')}\n\n`)
+	term.bold.underline(`${localizeString('enter_file_path')}\n\n`)
 	editingText = true
 	term(filename)
 }
 
 const redrawStage4 = () => {
 	term.clear()
-	term.bold.underline(`${localiseString('review_settings')}\n\n`)
-	term.underline(localiseString('r_s_mode'))
+	term.bold.underline(`${localizeString('review_settings')}\n\n`)
+	term.underline(localizeString('r_s_mode'))
 	term(` ${modeList[selectedMode]}\n`)
-	term.underline(localiseString('r_s_args'))
+	term.underline(localizeString('r_s_args'))
 	term('\n')
 	for (let argName of Object.keys(flags)) {
 		term.italic(`\t${argName}: `)
 		term(flags[argName] + '\n')
 	}
-	term.underline(localiseString('r_s_file'))
+	term.underline(localizeString('r_s_file'))
 	term(` ${filename}\n`)
 }
 
@@ -106,7 +106,7 @@ const redrawStage5 = async () => {
 		await mainTask
 		mainTaskDone = true
 		term('\n\n\n')
-		term.bold.underline(localiseString('tui_done'))
+		term.bold.underline(localizeString('tui_done'))
 	}
 }
 
@@ -166,13 +166,13 @@ term.on('key', (name) => {
 			currentText = flags[keysToFlags[name]] ?? ''
 		} else if (name === 'ENTER') {
 			if (modeList[selectedMode] === 'keyframes' && flags['--keyframes'] === undefined)
-				return redrawStage2() || term(`\n\n${localiseString('keyframes_file_needed')}`)
+				return redrawStage2() || term(`\n\n${localizeString('keyframes_file_needed')}`)
 			stage = 3
 		}
 	} else if (stage === 3) {
 		if (name === 'ENTER') {
 			if (!fs.existsSync(filename))
-				return redrawStage3() || term(`\n\n${localiseString('file_not_found')}`)
+				return redrawStage3() || term(`\n\n${localizeString('file_not_found')}`)
 			stage = 4
 			editingText = false
 
