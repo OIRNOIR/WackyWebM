@@ -1,7 +1,7 @@
 'use strict'
 
 const fs = require('fs')
-const { localiseString } = require('../localisation')
+const { localizeString } = require('../localization')
 
 let lastKf = 0
 
@@ -122,7 +122,7 @@ function lerp(a, b, t) {
 
 module.exports = {
 	setup: async (info) => {
-		console.log(`${localiseString('parsing_keyframes', { file: info.keyFrameFile })}`)
+		console.log(`${localizeString('parsing_keyframes', { file: info.keyFrameFile })}`)
 		await parseKeyFrameFile(info.keyFrameFile, info.frameRate, info.maxWidth, info.maxHeight)
 	},
 	getFrameBounds: (info) => {

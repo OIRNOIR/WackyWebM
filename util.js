@@ -4,7 +4,7 @@
 
 const util = require('util')
 const path = require('path')
-const { localiseString } = require('./localisation.js')
+const { localizeString } = require('./localization.js')
 // These could be arguments, as well. They could also be taken via user input with readline.
 const delta = 1
 
@@ -46,8 +46,8 @@ const getFileName = (p) => path.basename(p, path.extname(p))
 
 // these are lambdas so that their value updates as locale changes.
 // this is bad for performance, but we don't call warn or error nearly often enough for it to be a big problem.
-const WARN = () => `\n${localiseString('warning_template')}\n`
-const ERROR = () => `\n${localiseString('error_template')}\n`
+const WARN = () => `\n${localizeString('warning_template')}\n`
+const ERROR = () => `\n${localizeString('error_template')}\n`
 const orgConsoleWarn = console.warn
 const orgConsoleError = console.error
 console.warn = (m) => orgConsoleWarn(WARN(), m)
