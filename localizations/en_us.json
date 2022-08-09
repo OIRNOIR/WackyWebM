@@ -46,5 +46,7 @@
 	"concatenating_audio": "Concatenating segments and applying audio to final webm file",
 	"done_removing_temp": "Done!\nRemoving temporary files...",
 	"error_during_update": "An error has occured while attempting to check for updates: {error}",
-	"newer_version_available": "A newer version is available. Please consider updating."
+	"newer_version_available": "A newer version is available. Please consider updating.",
+	"excess_keyframes": "Excess KeyFrame found at frame {time}!",
+	"unrecognized_interpolation": "Unrecognized interpolation mode {which}, using initial width/height."
 }
