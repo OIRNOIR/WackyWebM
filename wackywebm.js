@@ -325,7 +325,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	// Extracts the frames to be modified for the wackiness.
 	console.log(localizeString('splitting_frames'))
 	try {
-		await execAsync(`ffmpeg -threads ${maxThread} -y -vcodec libvpx -i "${videoPath}" "${workLocations.tempFrameFiles}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+		await execAsync(`ffmpeg -threads ${maxThread} -y${selectedModes.includes("transparency") ? " -vcodec libvpx" : ""} -i "${videoPath}" "${workLocations.tempFrameFiles}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch (e) {
 		ffmpegErrorHandler(e)
 	}
