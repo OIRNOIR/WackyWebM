@@ -19,8 +19,8 @@ function getLeftEdge(threshold, info) {
 	return 0
 }
 
-function getRightEdge(threshold, info) {
-	for (let x = info.maxWidth - 1; x >= 0; x--) {
+function getRightEdge(threshold, info, left) {
+	for (let x = info.maxWidth - 1; x >= left; x--) {
 		for (let y = 0; y < info.maxHeight; y++) {
 			if ((info.frameData[util.getPixelIndexFromCoords(x, y, info.maxWidth)] >>> 24) > threshold)
 				return x
@@ -39,8 +39,8 @@ function getTopEdge(threshold, info) {
 	return 0
 }
 
-function getBottomEdge(threshold, info) {
-	for (let y = info.maxHeight - 1; y >= 0; y--) {
+function getBottomEdge(threshold, info, top) {
+	for (let y = info.maxHeight - 1; y >= top; y--) {
 		for (let x = 0; x < info.maxWidth; x++) {
 			if ((info.frameData[util.getPixelIndexFromCoords(x, y, info.maxWidth)] >>> 24) > threshold)
 				return y
@@ -54,9 +54,9 @@ module.exports = {
 	setup: () => {},
 	getFrameBounds: (info) => {
 		const leftEdge = getLeftEdge(info.transparencyThreshold, info)
-		const rightEdge = getRightEdge(info.transparencyThreshold, info)
+		const rightEdge = getRightEdge(info.transparencyThreshold, info, leftEdge)
 		const topEdge = getTopEdge(info.transparencyThreshold, info)
-		const bottomEdge = getBottomEdge(info.transparencyThreshold, info)
+		const bottomEdge = getBottomEdge(info.transparencyThreshold, info, topEdge)
 
 		const width = rightEdge - leftEdge + 1
 		const height = bottomEdge - topEdge + 1
