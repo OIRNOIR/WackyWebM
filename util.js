@@ -1,7 +1,10 @@
+'use strict'
+
 // please only put things here that will be used by *multiple* modes, so as not to clutter the file too much.
 
 const util = require('util')
 const path = require('path')
+const { localizeString } = require('./localization.js')
 // These could be arguments, as well. They could also be taken via user input with readline.
 const delta = 1
 
@@ -41,11 +44,13 @@ async function getAudioLevelMap(videoPath) {
 
 const getFileName = (p) => path.basename(p, path.extname(p))
 
-const WARN = `\n[WARNING] %s\n`
-const ERROR = `\n[ERROR] %s\n`
+// these are lambdas so that their value updates as locale changes.
+// this is bad for performance, but we don't call warn or error nearly often enough for it to be a big problem.
+const WARN = () => `\n${localizeString('warning_template')}\n`
+const ERROR = () => `\n${localizeString('error_template')}\n`
 const orgConsoleWarn = console.warn
 const orgConsoleError = console.error
-console.warn = (m) => orgConsoleWarn(WARN, m)
-console.error = (m) => orgConsoleError(ERROR, m)
+console.warn = (m) => orgConsoleWarn(WARN(), m)
+console.error = (m) => orgConsoleError(ERROR(), m)
 
 module.exports = { delta, getAudioLevelMap, getFileName }

@@ -11,6 +11,7 @@ const fs = require('fs')
 const util = require('util')
 // I'll admit, inconvenient naming here.
 const { delta, getFileName } = require('./util')
+const { localizeString, setLocale } = require('./localization')
 const execAsync = util.promisify(require('child_process').exec)
 
 const modes = {}
@@ -20,7 +21,7 @@ for (const modeFile of fs.readdirSync(modesDir).filter((file) => file.endsWith('
 		let modeName = getFileName(modeFile).toLowerCase()
 		modes[modeName] = require(path.join(modesDir, modeFile))
 	} catch (e) {
-		console.warn(`mode: ${getFileName(modeFile)} load failed`)
+		console.warn(localizeString('load_mode_failed', { mode: getFileName(modeFile) }))
 	}
 }
 
@@ -34,9 +35,14 @@ let selectedModes = [],
 	maxThread = undefined,
 	tempo = undefined,
 	angle = undefined,
-	compressionLevel = undefined
+	compressionLevel = undefined,
+	updateCheck = true
 
 // NOTE! if you add a new option, please check out if anything needs to be added for it into terminal-ui.js
+
+// TODO localize the arguments' descriptions (and add translation keys for them)
+// along with this, probably localize the usage help
+// this would be especially helpful for terminal-ui users.
 const argsConfig = [
 	{
 		keys: ['-h', '--help'],
@@ -55,8 +61,7 @@ const argsConfig = [
 	},
 	{
 		keys: ['-b', '--bitrate'],
-		// Default bitrate: 1M
-		default: () => (bitrate = '1M'),
+		default: () => (bitrate = null),
 		call: (val) => (bitrate = val),
 		getValue: () => bitrate,
 		description: 'sets the maximum bitrate of the video. Lowering this might reduce file size.',
@@ -97,6 +102,20 @@ const argsConfig = [
 		getValue: () => compressionLevel,
 		description: 'sets compression level (higher value means more compression)',
 	},
+	{
+		keys: ['-l', '--language'],
+		default: () => { },
+		call: (l) => (setLocale(l)),
+		// allows for more than one -l flag, but i don't think it's worth exposing "currentLocale" just for this
+		getValue: () => undefined,
+		description: 'Sets the used language',
+	},
+	{
+		keys: ['--no-update-check'],
+		noValueAfter: true,
+		call: () => ( updateCheck = false ),
+		description: 'disables the automatic update check',
+	}
 ]
 
 function parseCommandArguments() {
@@ -108,9 +127,9 @@ function parseCommandArguments() {
 			let argFound = false
 			for (const j of argsConfig) {
 				if (j.keys.includes(arg)) {
-					// need vale but no argument after || set argument value twice
+					// need value but no argument after                    || set argument value twice
 					if ((!j.noValueAfter && i === process.argv.length - 1) || (j.getValue && j.getValue() !== undefined)) {
-						console.error(`Illegal argument: ${arg}`)
+						console.error(localizeString("arg_cannot_be_set", { arg }))
 						return displayUsage()
 					}
 					if (j.noValueAfter)
@@ -122,7 +141,7 @@ function parseCommandArguments() {
 				}
 			}
 			if (!argFound) {
-				console.error(`Argument "${arg}" can't be set`)
+				console.error(localizeString('illegal_argument', { arg }))
 				return displayUsage()
 			}
 			continue
@@ -141,18 +160,18 @@ function parseCommandArguments() {
 	// not a single positional argument, we need at least 1
 	if (selectedModes.length === 0) {
 		selectedModes = ['bounce']
-		console.warn(`Mode not selected, using default "${selectedModes.join('+')}".`)
+		console.warn(localizeString('no_mode_selected', { default: selectedModes.join('+')}))
 	}
 	// Keyframes mode selected without providing keyframe file
 	if (selectedModes.includes('keyframes') && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
-		if (keyFrameFile) console.error(`Keyframes file not found. "${keyFrameFile}"`)
-		else console.error(`Keyframes file not given.`)
+		if (keyFrameFile) console.error(localizeString('kf_file_not_found', { file: keyFrameFile }))
+		else console.error(localizeString('kf_file_required'))
 		return displayUsage()
 	}
 
 	// got 1 positional argument, which was the mode to use - no file path!
 	if (videoPath.length === 0) {
-		console.error('Video file not given.')
+		console.error(localizeString('no_video_file'))
 		return displayUsage()
 	}
 	else videoPath = videoPath.join(' ')
@@ -205,10 +224,47 @@ function ffmpegErrorHandler(e) {
 }
 
 async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath) {
+	if (updateCheck) {
+		// before doing anything else, so it gets displayed even in case of error, check if we have the latest version.
+		let ourVersion = fs.existsSync(path.join(__dirname, 'hash')) ? fs.readFileSync(path.join(__dirname, 'hash')).toString().trim() : 'string that never matches any git commit hash.\ngithub user that does not exist!"§%$&';
+		ourVersion = ourVersion.replace(/\r/g, '').split('\n')
+		const https = require('https')
+		https.get[util.promisify.custom] = (URL) => {
+			return new Promise((res, rej) => {
+				https.get(URL, response => {
+					let data = ''
+
+					response.on('data', (chunk) => {
+						data += chunk;
+					})
+
+					response.on('end', () => {
+						res(data)
+					})
+				}).on('error', (e) => {
+					rej(e)
+				}).setTimeout(5000, () => {
+					rej(new Error("Timeout"))
+				})
+			})
+		}
+		const promiseGet = util.promisify(https.get)
+
+		try {
+			const upStreamHash = await promiseGet(`https://raw.githubusercontent.com/${ourVersion[1]}/WackyWebM/main/hash`)
+
+			if (upStreamHash.trim() !== ourVersion[0].trim()) {
+				console.log(localizeString('newer_version_available'));
+			}
+		} catch (e) {
+			console.warn(localizeString('error_during_update', { error: e }))
+		}
+	}
+
 	// Verify the given path is accessible.
 	if (!videoPath || !fs.existsSync(videoPath)) {
-		if (videoPath) console.error(`Video file not found. "${videoPath}"`)
-		else console.error(`Video file not given.`)
+		if (videoPath) console.error(localizeString('video_file_not_found', { file: videoPath }))
+		else console.error(localizeString('no_video_file'))
 		return displayUsage()
 	}
 
@@ -216,51 +272,48 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	buildLocations()
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
-	console.log(`\
-Input file: ${videoPath}.
-Using minimum w/h ${delta}px.
-Extracting necessary input file info...`)
-	const videoInfo = await execAsync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+	console.log(localizeString('info1', { delta, video: videoPath }))
+	const videoInfo = await execAsync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames,bit_rate "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	// Deconstructor extracts these values and renames them.
 	let {
-		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate, nb_read_frames: frameCount }],
+		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate, nb_read_frames: frameCount, bit_rate: originalBitrate }]
 	} = JSON.parse(videoInfo.stdout.trim())
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
 	frameCount = Number(frameCount)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
+	if (bitrate == null) bitrate = Math.min(originalBitrate ?? 500000, 1000000)
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
-	console.log(`\
-Resolution is ${maxWidth}x${maxHeight}.
-Framerate is ${framerate} (${decimalFramerate}).`)
+	console.log(localizeString('info2', { w: maxWidth, h: maxHeight, framerate, decframerate: decimalFramerate, bitrate: originalBitrate}))
 
 	// Print config
-	console.log(`============Config============`)
-	console.log(`Mode: ${selectedModes.map(m => m[0].toUpperCase() + m.slice(1))}`)
-	if (selectedModes.includes('bounce') || selectedModes.includes('shutter')) console.log(`Bounce speed: ${tempo} times per second`)
-	else if (selectedModes.includes('rotate')) console.log(`Rotating speed: ${angle} deg per second`)
-	else if (selectedModes.includes('keyframes')) console.log(`Keyframe file: ${keyFrameFile}`)
-	console.log(`==============================`)
+	console.log(localizeString('config_header'))
+	console.log(localizeString('config_mode_list', { modes: selectedModes.map(m => m[0].toUpperCase() + m.slice(1))}))
+	if (selectedModes.includes('bounce') || selectedModes.includes('shutter')) console.log(localizeString('bounce_speed', { tempo }))
+	else if (selectedModes.includes('rotate')) console.log(localizeString('rotate_speed', { angle }))
+	else if (selectedModes.includes('keyframes')) console.log(localizeString('keyframe_file', { file: keyFrameFile }))
+	if (bitrate !== originalBitrate) console.log(localizeString('output_bitrate', { bitrate }))
+	console.log(localizeString('config_footer'))
 
 	// Create temp folder
-	console.log('Creating temporary directories...')
+	console.log(localizeString('creating_temp_dirs'))
 	await fs.promises.mkdir(workLocations.tempFrames, { recursive: true })
 	await fs.promises.mkdir(workLocations.tempResizedFrames, { recursive: true })
 
 	// Separates the audio to be re-applied at the end of the process.
-	console.log('Splitting audio into a temporary file...')
+	console.log(localizeString('splitting_audio'))
 	// If the file has no audio, flag it to it is not attempted.
 	let audioFlag = true
 	try {
 		await execAsync(`ffmpeg -y -i "${videoPath}" -vn -c:a libvorbis "${workLocations.tempAudio}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch {
-		console.warn('No audio detected.')
+		console.warn(localizeString('no_audio'))
 		audioFlag = false
 	}
 
 	// Extracts the frames to be modified for the wackiness.
-	console.log('Splitting file into frames...')
+	console.log(localizeString('splitting_frames'))
 	try {
 		await execAsync(`ffmpeg -threads ${maxThread} -y -i "${videoPath}" "${workLocations.tempFrameFiles}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch (e) {
@@ -305,7 +358,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 		totalFramesDone = 0
 
 	const startTime = Date.now()
-	process.stdout.write(`Converting frames to webm...`)
+	console.log(localizeString('starting_conversion'))
 
 	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
 	const maxSegmentLength = Math.floor(frameCount / maxThread)
@@ -384,7 +437,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 				const framePad = String(sameSizeCount).padStart((Math.log10(frameCount) + 1) | 0)
 				process.stdout.clearLine()
 				process.stdout.cursorTo(0)
-				process.stdout.write(`Converting ${framePad} frames to webm (frames ${frame}-${frame + sameSizeCount - 1} / ${frameCount}) - ${Math.floor((1000 * totalFramesDone) / frameCount) / 10.0}%`)
+				process.stdout.write(localizeString('convert_progress', { framecount: framePad, startframe: frame, endframe: frame + sameSizeCount - 1, batch_size: frameCount, percent: Math.floor((1000 * totalFramesDone) / frameCount) / 10.0}))
 
 				sameSizeCount = 1
 				lastWidth = frameBounds.width
@@ -401,17 +454,14 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 			for (const process of subProcess) await process
 			// Clean up
 			subProcess.length = 0
-			process.stdout.clearLine()
-			process.stdout.cursorTo(0)
-			process.stdout.write(`Converting frames to webm (Done ${frameCount} frames)... use ${Date.now() - startTime}ms`)
-			process.stdout.write(`\nSuccessfully converted all frames to webm.`)
+			process.stdout.write(`\n${localizeString('done_conversion', { time: Date.now() - startTime, frameCount})}`)
 			break
 		}
 	}
 	process.stdout.write('\n')
 
 	// Writes the concatenation file for the next step.
-	console.log('Writing concat file...')
+	console.log(localizeString('writing_concat_file'))
 	await fs.promises.writeFile(workLocations.tempConcatList, tempFiles.join('\n'))
 
 	// Concatenates the resized files.
@@ -423,7 +473,7 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 	//await execSync(`ffmpeg -y -i "${workLocations.tempVideo}" -i "${workLocations.tempAudio}" -c copy "${path.join(filePath, `${fileName}_${inputType}.webm`)}"`)
 
 	// Congatenates segments and applies te original audio to the new file.
-	console.log(`Concatenating segments${audioFlag ? ' and applying audio ' : ' '}for final webm file...`)
+	console.log(localizeString('concatenating' + (audioFlag ? '_audio' : '')))
 	//if(audioFlag) await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -i "${workLocations.tempAudio}" -c copy "${workLocations.outputFile}"`)
 	//else await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -c copy "${workLocations.outputFile}"`)
 	try {
@@ -433,11 +483,11 @@ Framerate is ${framerate} (${decimalFramerate}).`)
 	}
 
 	// Recursive removal of temporary files via the main temporary folder.
-	console.log('Done!\nRemoving temporary files...')
+	console.log(localizeString('done_removing_temp'))
 	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
 
-module.exports = { modes, main, arguments: argsConfig, run: main }
+module.exports = { modes, main, args: argsConfig, run: main }
 
 // recommended way to check if this file is the entry point, as per
 // https://nodejs.org/api/deprecations.html#DEP0144

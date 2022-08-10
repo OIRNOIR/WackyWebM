@@ -1,12 +1,21 @@
+'use strict'
+
+// do this before importing wackywebm or util, so that they use our modified locale
+const { setLocale, localizeString } = require('./localization.js')
+
+if (process.argv.length > 2)
+	setLocale(process.argv[2])
+
 // spaghetti ahead; beware.
 // i strongly advise no one to ever touch this again unless you're being paid a lot for it.
 
 const { terminal: term } = require('terminal-kit')
 const path = require('path')
-const { modes, arguments, main } = require('./wackywebm.js')
+const { modes, args, main } = require('./wackywebm.js')
 const { getFileName } = require('./util')
 const fs = require('fs')
 
+// 0: select locale
 // 1: select mode to use
 // 2: optional and required flags
 // 3: file selection
@@ -20,7 +29,7 @@ const modeList = Object.keys(modes)
 let selectedMode = modeList.indexOf('bounce')
 const redrawStage1 = () => {
 	term.clear()
-	term.bold.underline('Select Mode to use with arrow keys, confirm with enter.\n\n')
+	term.bold.underline(`${localizeString('select_mode_arrows')}\n\n`)
 	for (let modeIx in modeList) {
 		// i dont know why js decided that iterating over an array's indices should give you strings...
 		modeIx = parseInt(modeIx)
@@ -48,19 +57,19 @@ const keysToFlags = {
 const redrawStage2 = () => {
 	term.clear()
 	if (currentEdit === undefined) {
-		term.bold.underline(`to change any options (all of which ${modeList[selectedMode] === 'keyframes' ? 'except the keyframe file ' : ''}are optional), press the corresponding button. When you are done, press enter.\n\n`)
+		term.bold.underline(`${modeList[selectedMode] === 'keyframes' ? localizeString('change_options_k') : localizeString('change_options')}\n\n`)
 		// the process of figuring out which options to display here could possibly be automated, but it seems too much
 		// trouble for the marginal benefit, considering how rarely new ones get added.
 		for (const key of Object.keys(keysToFlags)) {
 			term.italic(key)
-			term(`: ${arguments.filter(a => a.keys.includes(keysToFlags[key]))[0].description}\n`)
+			term(`: ${args.filter(a => a.keys.includes(keysToFlags[key]))[0].description}\n`)
 		}
 
-		term.bold.underline(`\ncurrently set argument values:\n`)
+		term.bold.underline(`\n${localizeString('current_arg_values')}\n`)
 		for (const flag of Object.keys(flags))
 			term(`${flag} = "${flags[flag]}"\n`)
 	} else {
-		term.bold.underline(`Please enter your desired value for the argument "${currentEdit}", then press enter to confirm. Escape to Cancel.\n`)
+		term.bold.underline(`${localizeString('enter_arg_value', { arg: currentEdit })}\n`)
 		term.italic(currentText)
 	}
 
@@ -69,27 +78,27 @@ const redrawStage2 = () => {
 let filename = ''
 const redrawStage3 = () => {
 	term.clear()
-	term.bold.underline('Please enter the path to the file you wish to convert (including file name and, if applicable, extension)\n\n')
+	term.bold.underline(`${localizeString('enter_file_path')}\n\n`)
 	editingText = true
 	term(filename)
 }
 
 const redrawStage4 = () => {
 	term.clear()
-	term.bold.underline('These are the settings you selected. If you want to proceed, press Enter. If not, exit the program (Q or Ctrl+C)\n\n')
-	term.underline(`Mode:`)
+	term.bold.underline(`${localizeString('review_settings')}\n\n`)
+	term.underline(localizeString('r_s_mode'))
 	term(` ${modeList[selectedMode]}\n`)
-	term.underline(`Modified Arguments:`)
+	term.underline(localizeString('r_s_args'))
 	term('\n')
 	for (let argName of Object.keys(flags)) {
 		term.italic(`\t${argName}: `)
 		term(flags[argName] + '\n')
 	}
-	term.underline('Selected File:')
+	term.underline(localizeString('r_s_file'))
 	term(` ${filename}\n`)
 }
 
-let mainTask;
+let mainTask
 let mainTaskDone = false
 const redrawStage5 = async () => {
 	if (!mainTaskDone) {
@@ -97,7 +106,7 @@ const redrawStage5 = async () => {
 		await mainTask
 		mainTaskDone = true
 		term('\n\n\n')
-		term.bold.underline("Done! Press any key to close this interface.")
+		term.bold.underline(localizeString('tui_done'))
 	}
 }
 
@@ -157,13 +166,13 @@ term.on('key', (name) => {
 			currentText = flags[keysToFlags[name]] ?? ''
 		} else if (name === 'ENTER') {
 			if (modeList[selectedMode] === 'keyframes' && flags['--keyframes'] === undefined)
-				return redrawStage2() || term('\n\nYou need to set the keyframes argument.')
+				return redrawStage2() || term(`\n\n${localizeString('keyframes_file_needed')}`)
 			stage = 3
 		}
 	} else if (stage === 3) {
 		if (name === 'ENTER') {
 			if (!fs.existsSync(filename))
-				return redrawStage3() || term('\n\nFile does not exist!')
+				return redrawStage3() || term(`\n\n${localizeString('file_not_found')}`)
 			stage = 4
 			editingText = false
 
@@ -196,10 +205,10 @@ term.on('key', (name) => {
 				flags['--output'] = `${path.join(path.dirname(filename), getFileName(filename))}_${modeList[selectedMode]}.webm`
 
 			mainTask = main([modeList[selectedMode]], filename, flags['--keyframes'], flags['--bitrate'], flags['--thread'], flags['--tempo'], flags['--angle'], flags['--compression'], flags['--output'])
-		} else if (stage === 5) {
-			if (mainTaskDone)
-				process.exit(0)
 		}
+	} else if (stage === 5) {
+		if (mainTaskDone)
+			process.exit(0)
 	}
 
 	if (stage === 1)
