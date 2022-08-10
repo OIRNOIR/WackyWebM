@@ -251,9 +251,9 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 		const promiseGet = util.promisify(https.get)
 
 		try {
-			const upStreamHash = await promiseGet(`https://raw.githubusercontent.com/${ourVersion[1]}/WackyWebM/main/hash`)
+			const upStreamHash = (await promiseGet(`https://raw.githubusercontent.com/${ourVersion[1]}/WackyWebM/main/hash`)).split('\n')
 
-			if (upStreamHash.trim() !== ourVersion[0].trim()) {
+			if (upStreamHash[0].trim() !== ourVersion[0].trim()) {
 				console.log(localizeString('newer_version_available'));
 			}
 		} catch (e) {
