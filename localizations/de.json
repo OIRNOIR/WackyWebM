@@ -43,5 +43,6 @@
     "info1": "Eingabe-Datei: {video}.\nVerwende minimale Breite/Höhe von {delta]px.\nExtrahiere nötige Informationen aus dem Video...",
     "creating_temp_dirs": "Erstelle temporäre Ordner...",
     "convert_progress": "Konvertiere {framecount} Bilder zu WebM ({batch_size} Bilder, von {startframe} bis {endframe}) - {percent}%",
-    "done_removing_temp": "Fertig!\nEntferne temporäre Dateien..."
+    "done_removing_temp": "Fertig!\nEntferne temporäre Dateien...",
+    "error_during_update": "Ein Fehler ist beim versuch nach updates zu suchen aufgetreten: {error}"
 }
