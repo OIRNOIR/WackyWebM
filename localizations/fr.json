@@ -1,5 +1,5 @@
 {
-    "select_mode_arrows": "Sélectionnez le mode à utiliser avec les flèches du clavier, puis appuyez sur entrée pour confirmer.",
+    "select_mode_arrows": "Sélectionnez le mode à utiliser avec les flèches directionnelles, puis appuyez sur entrée pour confirmer.",
     "no_mode_selected": "Aucun mode sélectionné, le mode par défaut \"{default}\" est utilisé.",
     "kf_file_not_found": "Le fichier d'images clés {file} n'a pas été trouvé.",
     "no_video_file": "Aucun fichier vidéo d'entrée n'a été donné.",
@@ -15,7 +15,7 @@
     "splitting_audio": "Fractionnement de l'audio dans un fichier temporaire...",
     "no_audio": "Pas d'audio détecté.",
     "starting_conversion": "Conversion des images en webm...",
-    "change_options_k": "Pour changer les options (qui sont, sauf les images clés, toutes optionnelles), appuyez sur le bouton correspondant. Une fois terminé, appuyez sur entrée.",
+    "change_options_k": "Pour changer les options (qui sont, sauf le fichier \"Keyframes\", toutes optionnelles), appuyez sur le bouton correspondant. Une fois terminé, appuyez sur entrée.",
     "change_options": "Pour changer les options (qui sont toutes optionnelles), appuyez sur le bouton correspondant. Une fois terminé, appuyez sur entrée.",
     "enter_arg_value": "Entrez la valeur désirée pour l'argument \"{arg}\", puis appuyez sur entrer pour confirmer, échap pour annuler.",
     "enter_file_path": "Entrez le chemin d'accès du fichier que vous souhaitez convertir (inclure le nom du fichier, et si possible son extension)",
