@@ -1,7 +1,7 @@
 {
     "change_options_k": "Um Optionen zu ändern (von denen alle außer der Keyframe-Datei optional sind), den jeweils angezeigten Knopf drücken. Wenn Sie fertig sind, drücken Sie Enter.",
     "current_arg_values": "Bereits geänderte Argumente:",
-    "enter_file_path": "Bitte geben Sie den Pfad zu der zu konvertierenden Datei ein (inklusive Dateinamensendung, wenn vorhanden)",
+    "enter_file_path": "Bitte geben Sie den Pfad zu der zu konvertierenden Datei ein (inklusive Dateinamenendung, wenn vorhanden)",
     "review_settings": "Dies sind die Einstellungen, die Sie gewählt haben. Wenn Sie mit diesen fortfahren möchten, drücken Sie Enter. Wenn nicht, schließen Sie das Programm (Q oder Strg+C)",
     "r_s_mode": "Modus:",
     "r_s_args": "Veränderte Argumente:",
@@ -35,8 +35,8 @@
     "concatenating_audio": "Ziehe Segmente und Audio in finale WebM-Datei zusammen...",
     "select_mode_arrows": "Zu verwendenden Modus über die Pfeiltasten auswählen, dann mit Enter bestätigen.",
     "change_options": "Um Optionen zu ändern (von denen alle optional sind), den jeweils angezeigten Knopf drücken. Wenn Sie fertig sind, drücken Sie Enter.",
-    "enter_arg_value": "Bitte geben Sie ihren gewünschten Wert für das Argument \"{arg}\" ein und drücken sie Enter zum bestätigen oder Escape zum abbrechen.",
-    "tui_done": "Fertig! Drücken Sie eine beliebige Taste um das Interface zu schließen.",
+    "enter_arg_value": "Bitte geben Sie ihren gewünschten Wert für das Argument \"{arg}\" ein und drücken sie Enter zum bestätigen oder Escape zum Abbrechen.",
+    "tui_done": "Fertig! Drücken Sie eine beliebige Taste, um das Interface zu schließen.",
     "flag_locale_desc": "Setzt die verwendete Sprache",
     "kf_file_not_found": "Keyframes-Datei {file} wurde nicht gefunden.",
     "kf_file_required": "Keyframes-Datei benötigt, jedoch keine gegeben.",
@@ -44,5 +44,9 @@
     "creating_temp_dirs": "Erstelle temporäre Ordner...",
     "convert_progress": "Konvertiere {framecount} Bilder zu WebM ({batch_size} Bilder, von {startframe} bis {endframe}) - {percent}%",
     "done_removing_temp": "Fertig!\nEntferne temporäre Dateien...",
-    "error_during_update": "Ein Fehler ist beim versuch nach updates zu suchen aufgetreten: {error}"
+    "error_during_update": "Ein Fehler ist beim Versuch, nach Updates zu suchen, aufgetreten: {error}",
+    "no_translation": "NICHT ÜBERSETZTER TEXT",
+    "newer_version_available": "Eine neuere Version ist verfügbar. Bitte ziehe in Betracht, zu updaten.",
+    "excess_keyframes": "Überflüssiger Keyframe in Bild {time} gefunden!",
+    "unrecognized_interpolation": "Nicht erkannter Interpolationsmodus \"{which}\" gefunden, verwende initiale Breite und Höhe."
 }
