@@ -11,7 +11,7 @@ if (process.argv.length > 2) setLocale(process.argv[2])
 const { terminal: term } = require('terminal-kit')
 const path = require('path')
 const { modes, args, main } = require('./wackywebm.js')
-const { getFileName } = require('./util')
+const { getFileName, isValidHttpUrl } = require('./util')
 const fs = require('fs')
 
 // 0: select locale
@@ -103,15 +103,6 @@ const redrawStage5 = async () => {
 		term('\n\n\n')
 		term.bold.underline(localizeString('tui_done'))
 	}
-}
-
-// Checks if a URL provided is a valid YouTube URL
-function isValidHttpUrl(url) {
-	var regex = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/
-	if (url.match(regex)) {
-		return url.match(regex)[1]
-	}
-	return false
 }
 
 term.on('key', (name) => {

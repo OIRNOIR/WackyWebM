@@ -12,7 +12,7 @@ const ytdl = require('ytdl-core')
 // Synchronous execution via promisify.
 const util = require('util')
 // I'll admit, inconvenient naming here.
-const { delta, getFileName } = require('./util')
+const { delta, getFileName, isValidHttpUrl } = require('./util')
 const { localizeString, setLocale } = require('./localization')
 const execAsync = util.promisify(require('child_process').exec)
 
@@ -223,15 +223,6 @@ function ffmpegErrorHandler(e) {
 			.filter((m) => !m.startsWith('  configuration:'))
 			.join('\n')
 	)
-}
-
-// Checks if a URL provided is a valid YouTube URL
-function isValidHttpUrl(url) {
-	var regex = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/
-	if (url.match(regex)) {
-		return url.match(regex)[1]
-	}
-	return false
 }
 
 // Creates a new Promise to allow the script to wait for the

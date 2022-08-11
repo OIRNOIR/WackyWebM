@@ -12,7 +12,7 @@ const delta = 1
 // this will make it Javascript's negative infinity.
 // dont export this (yet), we dont need it anywhere except getAudioLevelMap currently
 //const resolveNumber = (n) => (isNaN(Number(n)) ? Number.NEGATIVE_INFINITY : Number(n))
-const resolveNumber = (n, d = Number.NEGATIVE_INFINITY) => isFinite(n) ? Number(n) : d
+const resolveNumber = (n, d = Number.NEGATIVE_INFINITY) => (isFinite(n) ? Number(n) : d)
 
 const execSync = util.promisify(require('child_process').exec)
 // Obtains a map of the audio levels in decibels from the input file.
@@ -37,12 +37,21 @@ async function getAudioLevelMap(videoPath) {
 	for (const frame of intermediateMap) {
 		const clamped = Math.max(Math.min(frame.dBs, average + deviation), average - deviation)
 		const v = Math.abs((clamped - average) / deviation) * 0.5
-		frame.percentMax = clamped > average ? (0.5 + v) : (0.5 - v)
+		frame.percentMax = clamped > average ? 0.5 + v : 0.5 - v
 	}
 	return intermediateMap
 }
 
 const getFileName = (p) => path.basename(p, path.extname(p))
+
+// Checks if a URL provided is a valid YouTube and HTTP URL
+const isValidHttpUrl = (url) => {
+	var regex = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/
+	if (url.match(regex)) {
+		return url.match(regex)[1]
+	}
+	return false
+}
 
 // these are lambdas so that their value updates as locale changes.
 // this is bad for performance, but we don't call warn or error nearly often enough for it to be a big problem.
@@ -53,4 +62,4 @@ const orgConsoleError = console.error
 console.warn = (m) => orgConsoleWarn(WARN(), m)
 console.error = (m) => orgConsoleError(ERROR(), m)
 
-module.exports = { delta, getAudioLevelMap, getFileName }
+module.exports = { delta, getAudioLevelMap, getFileName, isValidHttpUrl }
