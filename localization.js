@@ -15,7 +15,7 @@ for (const locale of fs.readdirSync(localesDir).filter((file) => file.endsWith('
 	}
 }
 
-function findLocale(l) {
+function findLocaleInAliases(l) {
 	for (const locale in aliases) {
 		for (const alias of aliases[locale]) {
 			if (alias.test(l)) {
@@ -31,12 +31,15 @@ let currentLocale = fallBackLocale
 
 function setLocale(l) {
 	l = l.toString().toLowerCase()
-	let localeName = findLocale(l)
+	let localeName = findLocaleInAliases(l)
+	if (localeName === '')
+		localeName = l
 	console.log(localeName)
-	if (!localeName || !translations[localeName]) {
+	if (!translations[localeName]) {
 		console.warn(`No locale matching "${l}" found, using "en_us"`)
 		currentLocale = fallBackLocale
 	}
+	currentLocale = translations[localeName]
 }
 
 function localizeString(key, args = {}) {
