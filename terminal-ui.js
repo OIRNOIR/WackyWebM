@@ -174,9 +174,12 @@ term.on('key', (name) => {
 			if (!flags['--angle']) flags['--angle'] = 360
 			if (!flags['--compression']) flags['--compression'] = 0
 			if (!flags['--output'])
-				// not perfect, but works well enough
-				flags['--output'] = `${path.join(path.dirname(filename), getFileName(filename))}_${modeList[selectedMode]}.webm`
-
+				if (isValidHttpUrl(filename)) {
+					flags['--output'] = `${path.join(__dirname, getFileName(filename))}_${modeList[selectedMode]}.webm`
+				} else {
+					// not perfect, but works well enough
+					flags['--output'] = `${path.join(path.dirname(filename), getFileName(filename))}_${modeList[selectedMode]}.webm`
+				}
 			mainTask = main([modeList[selectedMode]], filename, flags['--keyframes'], flags['--bitrate'], flags['--thread'], flags['--tempo'], flags['--angle'], flags['--compression'], flags['--output'])
 		}
 	} else if (stage === 5) {

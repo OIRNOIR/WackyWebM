@@ -42,7 +42,10 @@ async function getAudioLevelMap(videoPath) {
 	return intermediateMap
 }
 
-const getFileName = (p) => path.basename(p, path.extname(p))
+const getFileName = (p) => {
+	if (isValidHttpUrl(p)) return 'youtube_download'
+	else return path.basename(p, path.extname(p))
+}
 
 // Checks if a URL provided is a valid YouTube and HTTP URL
 const isValidHttpUrl = (url) => {
