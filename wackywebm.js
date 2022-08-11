@@ -196,6 +196,9 @@ function buildLocations() {
 	workLocations.tempFrames = path.join(workLocations.tempFolder, 'tempFrames')
 	workLocations.tempFrameFiles = path.join(workLocations.tempFrames, '%d.png')
 	workLocations.tempResizedFrames = path.join(workLocations.tempFolder, 'tempResizedFrames')
+
+	// create a temp folder for the downloaded youtube video
+	workLocations.tempYoutubeDownload = path.join(workLocations.tempFolder, 'tempYoutubeDownload')
 }
 
 function displayUsage() {
@@ -220,6 +223,28 @@ function ffmpegErrorHandler(e) {
 			.filter((m) => !m.startsWith('  configuration:'))
 			.join('\n')
 	)
+}
+
+// Checks if a URL provided is a valid YouTube URL
+function isValidHttpUrl(url) {
+	var regex = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/
+	if (url.match(regex)) {
+		return url.match(regex)[1]
+	}
+	return false
+}
+
+// Creates a new Promise to allow the script to wait for the
+// YouTube video to finish downloading and saves it in the
+// temporarly download folder
+async function downloadYoutubeVideo(url, newFilePath) {
+	await fs.promises.mkdir(workLocations.tempYoutubeDownload, { recursive: true })
+
+	return new Promise((resolve) => {
+		const stream = ytdl(url)
+		let status = stream.pipe(fs.createWriteStream(newFilePath))
+		status.on('finish', resolve)
+	})
 }
 
 async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath) {
@@ -273,6 +298,16 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 
 	// Only build the path if temporary location index if the code can move forward. Less to do.
 	buildLocations()
+
+	// If the videoPath is a URL, check if it is a valid YouTube URL and then
+	// download the YouTube video to a temp folder. Once downloaded, replace the
+	// link within the videoPath var with the location of the temporarily downloaded
+	// YouTube video.
+	if (isValidHttpUrl(videoPath)) {
+		let newFilePath = workLocations.tempYoutubeDownload + '/vid.mp4'
+		await downloadYoutubeVideo(videoPath, newFilePath)
+		videoPath = newFilePath
+	}
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
 	console.log(localizeString('info1', { delta, video: videoPath }))
