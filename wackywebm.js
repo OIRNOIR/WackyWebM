@@ -7,6 +7,8 @@ By OIRNOIR#0032
 
 const path = require('path')
 const fs = require('fs')
+// Downloadinh youtube videos directly
+const ytdl = require('ytdl-core')
 // Synchronous execution via promisify.
 const util = require('util')
 // I'll admit, inconvenient naming here.
@@ -104,8 +106,8 @@ const argsConfig = [
 	},
 	{
 		keys: ['-l', '--language'],
-		default: () => { },
-		call: (l) => (setLocale(l)),
+		default: () => {},
+		call: (l) => setLocale(l),
 		// allows for more than one -l flag, but i don't think it's worth exposing "currentLocale" just for this
 		getValue: () => undefined,
 		description: 'Sets the used language',
@@ -113,9 +115,9 @@ const argsConfig = [
 	{
 		keys: ['--no-update-check'],
 		noValueAfter: true,
-		call: () => ( updateCheck = false ),
+		call: () => (updateCheck = false),
 		description: 'disables the automatic update check',
-	}
+	},
 ]
 
 function parseCommandArguments() {
@@ -129,13 +131,11 @@ function parseCommandArguments() {
 				if (j.keys.includes(arg)) {
 					// need value but no argument after                    || set argument value twice
 					if ((!j.noValueAfter && i === process.argv.length - 1) || (j.getValue && j.getValue() !== undefined)) {
-						console.error(localizeString("arg_cannot_be_set", { arg }))
+						console.error(localizeString('arg_cannot_be_set', { arg }))
 						return displayUsage()
 					}
-					if (j.noValueAfter)
-						j.call(null)
-					else
-						j.call(++i === process.argv.length ? null : process.argv[i])
+					if (j.noValueAfter) j.call(null)
+					else j.call(++i === process.argv.length ? null : process.argv[i])
 					argFound = true
 					break
 				}
@@ -160,7 +160,7 @@ function parseCommandArguments() {
 	// not a single positional argument, we need at least 1
 	if (selectedModes.length === 0) {
 		selectedModes = ['bounce']
-		console.warn(localizeString('no_mode_selected', { default: selectedModes.join('+')}))
+		console.warn(localizeString('no_mode_selected', { default: selectedModes.join('+') }))
 	}
 	// Keyframes mode selected without providing keyframe file
 	if (selectedModes.includes('keyframes') && (keyFrameFile === undefined || !fs.existsSync(keyFrameFile))) {
@@ -173,8 +173,7 @@ function parseCommandArguments() {
 	if (videoPath.length === 0) {
 		console.error(localizeString('no_video_file'))
 		return displayUsage()
-	}
-	else videoPath = videoPath.join(' ')
+	} else videoPath = videoPath.join(' ')
 	fileName = getFileName(videoPath)
 	filePath = path.dirname(videoPath)
 
@@ -226,26 +225,29 @@ function ffmpegErrorHandler(e) {
 async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath) {
 	if (updateCheck) {
 		// before doing anything else, so it gets displayed even in case of error, check if we have the latest version.
-		let ourVersion = fs.existsSync(path.join(__dirname, 'hash')) ? fs.readFileSync(path.join(__dirname, 'hash')).toString().trim() : 'string that never matches any git commit hash.\ngithub user that does not exist!"§%$&';
+		let ourVersion = fs.existsSync(path.join(__dirname, 'hash')) ? fs.readFileSync(path.join(__dirname, 'hash')).toString().trim() : 'string that never matches any git commit hash.\ngithub user that does not exist!"§%$&'
 		ourVersion = ourVersion.replace(/\r/g, '').split('\n')
 		const https = require('https')
 		https.get[util.promisify.custom] = (URL) => {
 			return new Promise((res, rej) => {
-				https.get(URL, response => {
-					let data = ''
+				https
+					.get(URL, (response) => {
+						let data = ''
 
-					response.on('data', (chunk) => {
-						data += chunk;
-					})
+						response.on('data', (chunk) => {
+							data += chunk
+						})
 
-					response.on('end', () => {
-						res(data)
+						response.on('end', () => {
+							res(data)
+						})
 					})
-				}).on('error', (e) => {
-					rej(e)
-				}).setTimeout(5000, () => {
-					rej(new Error("Timeout"))
-				})
+					.on('error', (e) => {
+						rej(e)
+					})
+					.setTimeout(5000, () => {
+						rej(new Error('Timeout'))
+					})
 			})
 		}
 		const promiseGet = util.promisify(https.get)
@@ -254,7 +256,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 			const upStreamHash = (await promiseGet(`https://raw.githubusercontent.com/${ourVersion[1]}/WackyWebM/main/hash`)).split('\n')
 
 			if (upStreamHash[0].trim() !== ourVersion[0].trim()) {
-				console.log(localizeString('newer_version_available'));
+				console.log(localizeString('newer_version_available'))
 			}
 		} catch (e) {
 			console.warn(localizeString('error_during_update', { error: e }))
@@ -262,7 +264,8 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	}
 
 	// Verify the given path is accessible.
-	if (!videoPath || !fs.existsSync(videoPath)) {
+	if (!videoPath || (!fs.existsSync(videoPath) && !isValidHttpUrl(videoPath))) {
+		console.log(videoPath)
 		if (videoPath) console.error(localizeString('video_file_not_found', { file: videoPath }))
 		else console.error(localizeString('no_video_file'))
 		return displayUsage()
@@ -276,7 +279,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	const videoInfo = await execAsync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames,bit_rate "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	// Deconstructor extracts these values and renames them.
 	let {
-		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate, nb_read_frames: frameCount, bit_rate: originalBitrate }]
+		streams: [{ width: maxWidth, height: maxHeight, r_frame_rate: framerate, nb_read_frames: frameCount, bit_rate: originalBitrate }],
 	} = JSON.parse(videoInfo.stdout.trim())
 	maxWidth = Number(maxWidth)
 	maxHeight = Number(maxHeight)
@@ -285,11 +288,11 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	if (bitrate == null) bitrate = Math.min(originalBitrate ?? 500000, 1000000)
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
-	console.log(localizeString('info2', { w: maxWidth, h: maxHeight, framerate, decframerate: decimalFramerate, bitrate: originalBitrate}))
+	console.log(localizeString('info2', { w: maxWidth, h: maxHeight, framerate, decframerate: decimalFramerate, bitrate: originalBitrate }))
 
 	// Print config
 	console.log(localizeString('config_header'))
-	console.log(localizeString('config_mode_list', { modes: selectedModes.map(m => m[0].toUpperCase() + m.slice(1))}))
+	console.log(localizeString('config_mode_list', { modes: selectedModes.map((m) => m[0].toUpperCase() + m.slice(1)) }))
 	if (selectedModes.includes('bounce') || selectedModes.includes('shutter')) console.log(localizeString('bounce_speed', { tempo }))
 	else if (selectedModes.includes('rotate')) console.log(localizeString('rotate_speed', { angle }))
 	else if (selectedModes.includes('keyframes')) console.log(localizeString('keyframe_file', { file: keyFrameFile }))
@@ -327,20 +330,21 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 		.sort((a, b) => a.n - b.n)
 
 	const setupInfo = {
-		videoPath,
-		keyFrameFile,
-		maxWidth,
-		maxHeight,
-		frameCount,
-		frameRate: decimalFramerate
-	}, baseInfoObject = {
-		maxWidth,
-		maxHeight,
-		frameCount,
-		frameRate: decimalFramerate,
-		tempo,
-		angle
-	}
+			videoPath,
+			keyFrameFile,
+			maxWidth,
+			maxHeight,
+			frameCount,
+			frameRate: decimalFramerate,
+		},
+		baseInfoObject = {
+			maxWidth,
+			maxHeight,
+			frameCount,
+			frameRate: decimalFramerate,
+			tempo,
+			angle,
+		}
 
 	// Setup modes
 	for (const modeToSetUp of selectedModes)
@@ -368,8 +372,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 		const infoObject = Object.assign({ frame }, baseInfoObject)
 
 		const frameBounds = { width: maxWidth, height: maxHeight }
-		for (const mode of selectedModes)
-			Object.assign(frameBounds, modes[mode].getFrameBounds(infoObject))
+		for (const mode of selectedModes) Object.assign(frameBounds, modes[mode].getFrameBounds(infoObject))
 
 		if (frame === 0) {
 			lastWidth = frameBounds.width
@@ -410,7 +413,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 				}
 
 				// Add task to subProcess, set done as true if process done so we can remove it without awaiting first task done
-				const newProcess = execAsync(command, { maxBuffer: 1024 * 1000 * 8 }).then(() => newProcess.done = true)
+				const newProcess = execAsync(command, { maxBuffer: 1024 * 1000 * 8 }).then(() => (newProcess.done = true))
 				newProcess.assignedFrames = sameSizeCount
 				newProcess.threadUse = threadUse
 				threadUseCount += threadUse
@@ -423,9 +426,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 					const lastFrameOutputName = path.join(workLocations.tempResizedFrames, 'end.webm')
 					const vfCommand = frameBounds.command ?? `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`
 					//console.log(vfCommand)
-					const newProcess = execAsync(
-						`ffmpeg -y -r ${framerate} -start_number ${frame + 1} -i "${inputFile}" -frames:v 1 -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads 1 -f webm "${lastFrameOutputName}"`,
-						{ maxBuffer: 1024 * 1000 * 8 }).then(() => newProcess.done = true)
+					const newProcess = execAsync(`ffmpeg -y -r ${framerate} -start_number ${frame + 1} -i "${inputFile}" -frames:v 1 -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads 1 -f webm "${lastFrameOutputName}"`, { maxBuffer: 1024 * 1000 * 8 }).then(() => (newProcess.done = true))
 					newProcess.assignedFrames = sameSizeCount
 					newProcess.threadUse = threadUse
 					threadUseCount += threadUse
@@ -437,7 +438,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 				const framePad = String(sameSizeCount).padStart((Math.log10(frameCount) + 1) | 0)
 				process.stdout.clearLine()
 				process.stdout.cursorTo(0)
-				process.stdout.write(localizeString('convert_progress', { framecount: framePad, startframe: frame, endframe: frame + sameSizeCount - 1, batch_size: frameCount, percent: Math.floor((1000 * totalFramesDone) / frameCount) / 10.0}))
+				process.stdout.write(localizeString('convert_progress', { framecount: framePad, startframe: frame, endframe: frame + sameSizeCount - 1, batch_size: frameCount, percent: Math.floor((1000 * totalFramesDone) / frameCount) / 10.0 }))
 
 				sameSizeCount = 1
 				lastWidth = frameBounds.width
@@ -454,7 +455,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 			for (const process of subProcess) await process
 			// Clean up
 			subProcess.length = 0
-			process.stdout.write(`\n${localizeString('done_conversion', { time: Date.now() - startTime, frameCount})}`)
+			process.stdout.write(`\n${localizeString('done_conversion', { time: Date.now() - startTime, frameCount })}`)
 			break
 		}
 	}
