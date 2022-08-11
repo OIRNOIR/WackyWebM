@@ -26,5 +26,8 @@
 		"eslint": "^8.20.0",
 		"prettier": "2.7.1",
 		"terminal-kit": "^2.5.1"
+	},
+	"dependencies": {
+		"ytdl-core": "^4.11.0"
 	}
 }
