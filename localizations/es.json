@@ -1,6 +1,6 @@
 {
     "bounce_speed": "Velocidad del \"Bounce\": {tempo} veces por segundo",
-    "change_options_k": "Para cambiar cualquier opción (las cuales, excepto el archivo conteniendo los keyframes, son todas opcionales), presiona el botón/tecla correspondiente. Cuando hayas terminado, presiona Enter.",
+    "change_options_k": "Para cambiar cualquiera de las opciones (las cuales, excepto el archivo con los fotogramas clave, son todas opcionales), presiona el botón/tecla correspondiente. Cuando hayas terminado, presiona Enter.",
     "current_arg_values": "Valores actuales de los argumentos:",
     "keyframe_file": "Archivo de fotogramas clave: {file}",
     "review_settings": "Estos son los ajustes que has seleccionado. Si deseas continuar, presiona Enter. Si no, sal del programa (Q o Ctrl+C)",
@@ -43,9 +43,10 @@
     "change_options": "Para cambiar cualquier opción (las cuales son todas opcionales), presiona el botón/tecla correspondiente. Cuando hayas terminado, presiona Enter.",
     "enter_arg_value": "Por favor, introduce tu valor deseado para el argumento \"{arg}\", luego presiona Enter para confirmar. Escape para cancelar.",
     "enter_file_path": "Por favor, introduce la ruta hacia el archivo que quieras convertir (incluyendo el nombre del archivo y, a ser posible, la extensión del mismo)",
-    "keyframes_file_needed": "Es necesario que establezcas el argumento de los keyframes.",
-    "parsing_keyframes": "Analizando el archivo con los keyframes {file}...",
+    "keyframes_file_needed": "Es necesario que establezcas el argumento de los fotogramas clave.",
+    "parsing_keyframes": "Analizando el archivo con los fotogramas clave {file}...",
     "illegal_argument": "Argumento inválido: {arg}",
-    "kf_file_not_found": "El archivo con los keyframes {file} no se ha encontrado.",
-    "info1": "Archivo seleccionado: {video}.\nUsando resolución mínima (ancho/alto {delta}px)\nExtrayendo la información necesaria del archivo..."
+    "kf_file_not_found": "El archivo con los fotogramas clave {file} no se ha encontrado.",
+    "info1": "Archivo seleccionado: {video}.\nUsando resolución mínima (ancho/alto {delta}px)\nExtrayendo la información necesaria del archivo...",
+    "no_translation": "LÍNEA SIN TRADUCIR"
 }
