@@ -1,3 +1,4 @@
+#!/bin/sh
 # Print Ascii Art
 echo " 
  __          __        _       __          __  _     __  __ 
