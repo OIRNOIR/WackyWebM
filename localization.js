@@ -3,6 +3,7 @@ const fs = require('fs')
 
 const aliases = {
 	en_us: [/en([-_](au|bz|ca|cb|gb|in|ie|jm|nz|ph|za|tt|us))?/, /english/],
+	es: [/es/, /spanish/, /español/]
 }
 
 const translations = {}
@@ -26,7 +27,7 @@ function findLocale(l) {
 	return ''
 }
 
-let fallBackLocale = translations['en_us']
+let fallBackLocale = translations['en_us', 'es']
 let currentLocale = fallBackLocale
 
 function setLocale(l) {
