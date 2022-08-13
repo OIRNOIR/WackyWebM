@@ -1,5 +1,5 @@
 {
-	"name": "webm-maker-thing-idk",
+	"name": "WackyWebM",
 	"version": "1.0.0",
 	"description": "This is a simple tool to allow you to create WebM files with changing aspect ratios.",
 	"main": "wackywebm.js",
@@ -14,17 +14,21 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/OIRNOIR/WebM-Maker-Thing-Idk.git"
+		"url": "git+https://github.com/OIRNOIR/WackyWebM.git"
 	},
 	"author": "OIRNOIR",
 	"license": "GPL-3.0-or-later",
 	"bugs": {
-		"url": "https://github.com/OIRNOIR/WebM-Maker-Thing-Idk/issues"
+		"url": "https://github.com/OIRNOIR/WackyWebM/issues"
 	},
-	"homepage": "https://github.com/OIRNOIR/WebM-Maker-Thing-Idk#readme",
+	"homepage": "https://github.com/OIRNOIR/WackyWebM#readme",
 	"devDependencies": {
 		"eslint": "^8.20.0",
 		"prettier": "2.7.1",
 		"terminal-kit": "^2.5.1"
-	}
+	},
+	"engines": {
+    		"node": ">=16.15.0",
+    		"npm": ">=8.17.0"
+  	},
 }
