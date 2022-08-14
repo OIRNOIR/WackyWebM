@@ -1,1 +1,8 @@
-{}
+{
+    "no_translation": "LIÑA SEN TRADUCIR",
+    "select_mode_arrows": "Selecciona o modo a usar coas frechas do teclado, logo presione Enter para confirmar.",
+    "change_options_k": "Para cambiar calquera das opcións (todas son opcionais excepto o archivo contendo os fotogramas clave), preme o botón correspondente. Cando haxas terminado, preme Enter.",
+    "change_options": "Para cambiar calquera das opcións (todas son opcionais), preme o botón correspondente. Cando haxas finalizado, preme Enter.",
+    "current_arg_values": "valores de argumento establecidos:",
+    "enter_arg_value": "Por favor introduza o valor que desexas para o argumento \"{arg}\", despois preme Enter para confirmar. Escape para cancelar."
+}
