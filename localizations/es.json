@@ -19,7 +19,7 @@
     "load_mode_failed": "Modo: {mode} carga fallida",
     "flag_locale_desc": "Establece el lenguaje a usar",
     "arg_cannot_be_set": "El argumento {arg} no se puede establecer.",
-    "no_mode_selected": "No se ha seleccionado ningún modo, usando el modo por defecto \"{default}\"",
+    "no_mode_selected": "No se ha seleccionado ningún modo, se usará el modo por defecto \"{default}\"",
     "no_video_file": "No se ha especificado ningún archivo de vídeo.",
     "video_file_not_found": "No se ha encontrado el archivo de vídeo: \"{file}\"",
     "rotate_speed": "Velocidad de rotación: {angle}º por segundo",
