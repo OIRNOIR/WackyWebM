@@ -1,5 +1,5 @@
 {
-	"name": "WackyWebM",
+	"name": "wackywebm",
 	"version": "1.0.0",
 	"description": "This is a simple tool to allow you to create WebM files with changing aspect ratios.",
 	"main": "wackywebm.js",
@@ -30,5 +30,5 @@
 	"engines": {
     		"node": ">=16.15.0",
     		"npm": ">=8.17.0"
-  	},
+  	}
 }
