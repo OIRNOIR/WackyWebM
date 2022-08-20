@@ -146,7 +146,7 @@ module.exports = {
 		const t = (info.frame - keyFrames[lastKf].time) / (keyFrames[lastKf + 1].time - keyFrames[lastKf].time)
 
 		let [lastWidth, lastHeight] = [keyFrames[lastKf].width, keyFrames[lastKf].height]
-		let [nextWidth, nextHeight] = [keyFrames[lastKf].width, keyFrames[lastKf].height]
+		let [nextWidth, nextHeight] = lastKf === keyFrames.length - 1 ? [lastWidth, lastHeight] : [keyFrames[lastKf + 1].width, keyFrames[lastKf + 1].height]
 
 		if (keyFrames[lastKf + 1].interpolation.toLowerCase() === 'instant') {
 			// interpolate towards current size, instead of next one
