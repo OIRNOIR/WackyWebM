@@ -30,5 +30,8 @@
 	"engines": {
     		"node": ">=16.15.0",
     		"npm": ">=8.17.0"
-  	}
+  	},
+	"dependencies": {
+		"upng-js": "^2.1.0"
+	}
 }

@@ -15,6 +15,7 @@ If you're having issues, want to share your custom modes, or learn from the comm
 - [NodeJS v16.6 or higher](https://nodejs.org/en/download/)
 - [FFmpeg](https://ffmpeg.org/download.html)
 - FFprobe (included with FFmpeg)
+- Various NPM packages (simply run `npm i` in the project directory after installing node to install them automatically)
 
 ## NodeJS
 
@@ -82,6 +83,7 @@ You can also change the bitrate of the output file by tweaking -b (Default is 1M
 - `Shrink`: The video shrinks vertically until it's just one pixel thin.
 - `AudioBounce`: The video's vertical height changes relative to the current audio level verses the highest within the video.
 - `AudioShutter`: The video's horizontal width changes relative to the current audio level verses the highest within the video.
+- `Transparency`: Crops the video so that transparent pixels are excluded from the final result.
 - `Keyframes`: The video's height and width change based on a number of keyframes outlined in the file given as an argument. The format is as follows:
   - Every line consists of 4 (or 3) comma-seperated values:
     - first, the time in the video of the keyframe; either one integer representing seconds, or two, seperated by any one of the characters `.`, `:` or `-`, where the first still represents seconds, and the second represents frames.

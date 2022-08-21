@@ -13,6 +13,7 @@ const util = require('util')
 const { delta, getFileName } = require('./util')
 const { localizeString, setLocale } = require('./localization')
 const execAsync = util.promisify(require('child_process').exec)
+const UPNG = require("upng-js")
 
 const modes = {}
 const modesDir = path.join(__dirname, 'modes')
@@ -36,7 +37,8 @@ let selectedModes = [],
 	tempo = undefined,
 	angle = undefined,
 	compressionLevel = undefined,
-	updateCheck = true
+	updateCheck = true,
+	transparencyThreshold = undefined
 
 // NOTE! if you add a new option, please check out if anything needs to be added for it into terminal-ui.js
 
@@ -115,6 +117,14 @@ const argsConfig = [
 		noValueAfter: true,
 		call: () => ( updateCheck = false ),
 		description: 'disables the automatic update check',
+	},
+	{
+		keys: ['--transparency'],
+		// by default, ignore frames with an alpha value of 1 (or 0)
+		default: () => { transparencyThreshold = 1 },
+		call: (v) => { transparencyThreshold = parseInt(v) },
+		getValue: () => transparencyThreshold,
+		description: 'sets the transparency threshold for use with the "transparency" mode'
 	}
 ]
 
@@ -223,7 +233,7 @@ function ffmpegErrorHandler(e) {
 	)
 }
 
-async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath) {
+async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, transparencyThreshold, outputPath) {
 	if (updateCheck) {
 		// before doing anything else, so it gets displayed even in case of error, check if we have the latest version.
 		let ourVersion = fs.existsSync(path.join(__dirname, 'hash')) ? fs.readFileSync(path.join(__dirname, 'hash')).toString().trim() : 'string that never matches any git commit hash.\ngithub user that does not exist!"§%$&';
@@ -315,7 +325,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	// Extracts the frames to be modified for the wackiness.
 	console.log(localizeString('splitting_frames'))
 	try {
-		await execAsync(`ffmpeg -threads ${maxThread} -y -i "${videoPath}" "${workLocations.tempFrameFiles}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+		await execAsync(`ffmpeg -threads ${maxThread} -y${selectedModes.includes("transparency") ? " -vcodec libvpx" : ""} -i "${videoPath}" "${workLocations.tempFrameFiles}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch (e) {
 		ffmpegErrorHandler(e)
 	}
@@ -339,7 +349,8 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 		frameCount,
 		frameRate: decimalFramerate,
 		tempo,
-		angle
+		angle,
+		transparencyThreshold,
 	}
 
 	// Setup modes
@@ -363,9 +374,16 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	// dont let individual segments (partial webm files) get *too* long (half the file and more, sometimes), otherwise we have almost all threads idling and 1 doing all the work.
 	const maxSegmentLength = Math.floor(frameCount / maxThread)
 
+	const loadFrameData = selectedModes.filter(mode => modes[mode].requiresFrameData).length !== 0
+
 	// Creates the respective resized frame based on the selected mode.
 	for (const { file } of tempFramesFrames) {
-		const infoObject = Object.assign({ frame }, baseInfoObject)
+		// since it is quite an expensive operation, only load frame data if it's required
+		let frameData = undefined
+		if (loadFrameData) {
+			frameData = new Int32Array(UPNG.toRGBA8(UPNG.decode(fs.readFileSync(path.join(workLocations.tempFrames, file))))[0])
+		}
+		const infoObject = Object.assign({ frame, frameData, frameFilePath: path.join(workLocations.tempFrames, file) }, baseInfoObject)
 
 		const frameBounds = { width: maxWidth, height: maxHeight }
 		for (const mode of selectedModes)
@@ -386,7 +404,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 				const startFrame = frame - sameSizeCount + 1
 				const inputFile = path.join(workLocations.tempFrames, '%d.png')
 				const outputFileName = path.join(workLocations.tempResizedFrames, file + '.webm')
-				const command = `ffmpeg -y -r ${framerate} -start_number ${startFrame} -i "${inputFile}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads ${threadUse} -f webm "${outputFileName}"`
+				const command = `ffmpeg -y -r ${framerate} -start_number ${startFrame} -i "${inputFile}" -frames:v ${sameSizeCount} -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads ${threadUse} -f webm -auto-alt-ref 0 "${outputFileName}"`
 
 				// Remove if process done
 				subProcess = subProcess.filter((process) => {
@@ -424,7 +442,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 					const vfCommand = frameBounds.command ?? `-vf scale=${frameBounds.width}x${frameBounds.height} -aspect ${frameBounds.width}:${frameBounds.height}`
 					//console.log(vfCommand)
 					const newProcess = execAsync(
-						`ffmpeg -y -r ${framerate} -start_number ${frame + 1} -i "${inputFile}" -frames:v 1 -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads 1 -f webm "${lastFrameOutputName}"`,
+						`ffmpeg -y -r ${framerate} -start_number ${frame + 1} -i "${inputFile}" -frames:v 1 -c:v vp8 -b:v ${bitrate} -crf 10 ${vfCommand} -threads 1 -f webm -auto-alt-ref 0 "${lastFrameOutputName}"`,
 						{ maxBuffer: 1024 * 1000 * 8 }).then(() => newProcess.done = true)
 					newProcess.assignedFrames = sameSizeCount
 					newProcess.threadUse = threadUse
@@ -477,7 +495,7 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	//if(audioFlag) await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -i "${workLocations.tempAudio}" -c copy "${workLocations.outputFile}"`)
 	//else await execSync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}" -c copy "${workLocations.outputFile}"`)
 	try {
-		await execAsync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}"${audioFlag ? ` -i "${workLocations.tempAudio}" ` : ' '}-c copy "${outputPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
+		await execAsync(`ffmpeg -y -f concat -safe 0 -i "${workLocations.tempConcatList}"${audioFlag ? ` -i "${workLocations.tempAudio}" ` : ' '}-c copy -auto-alt-ref 0 "${outputPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	} catch (e) {
 		ffmpegErrorHandler(e)
 	}
@@ -497,4 +515,4 @@ if (parseCommandArguments() !== true) return
 
 // we're ignoring a promise (the one returned by main) here. this is by design and not harmful, so ignore the warning
 // noinspection JSIgnoredPromiseFromCall
-main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, outputPath)
+main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, transparencyThreshold, outputPath)
