@@ -1,18 +1,24 @@
 # WackyWebM
 
+[![Weblate project translated](https://img.shields.io/weblate/progress/wackywebm?server=https%3A%2F%2Ftranslate.kiaibot.com&style=for-the-badge)](https://translate.kiaibot.com/projects/wackywebm/wackywebm)
+![GitHub contributors](https://img.shields.io/github/contributors/oirnoir/wackywebm?style=for-the-badge)
+![GitHub Repo stars](https://img.shields.io/github/stars/oirnoir/wackywebm?style=for-the-badge)
+[![Discord](https://img.shields.io/discord/1003791722574266488?style=for-the-badge)](https://discord.gg/wackywebm)
+
+
 WackyWebM is a tool that allows you to create WebM video files with changing aspect ratios.
 
 If you're having issues, want to share your custom modes, or learn from the community join the Discord at the bottom of this readme.
 
 ## Dependencies
 
-- [NodeJS](https://nodejs.org/en/download/)
+- [NodeJS v16.6 or higher](https://nodejs.org/en/download/)
 - [FFmpeg](https://ffmpeg.org/download.html)
-- FFprobe
+- FFprobe (included with FFmpeg)
 
 ## NodeJS
 
-To begin installation, you must install NodeJS first. You can find the NodeJS download [here.](https://nodejs.org/en/)
+To begin installation, you must install NodeJS first. You can find the NodeJS download [here.](https://nodejs.org/en/download)
 
 Select your OS, and use the installer. After finished installing, click the `finish` button.
 
@@ -90,4 +96,5 @@ Additionally, any 2 modes can be combined using a + symbol, like Bounce+Shutter.
 
 ## Support
 
-If you encounter bugs, issues, or have recommendations, feel free to join the Discord [here.](https://discord.gg/TmyJfq49AP)[![Discord Invite Widget](https://invidget.switchblade.xyz/EdrqJ6AMKF)](https://discord.gg/EdrqJ6AMKF)
+If you encounter bugs, issues, or have recommendations, feel free to join the Discord [here.](https://discord.gg/TmyJfq49AP)
+[![Discord Invite Widget](https://invidget.switchblade.xyz/EdrqJ6AMKF)](https://discord.gg/EdrqJ6AMKF)
