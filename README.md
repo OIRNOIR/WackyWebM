@@ -1,5 +1,7 @@
 # WackyWebM
 
+[![Weblate project translated](https://img.shields.io/weblate/progress/wackywebm?server=https%3A%2F%2Ftranslate.kiaibot.com&style=for-the-badge)](https://translate.kiaibot.com/projects/wackywebm/wackywebm/)
+
 WackyWebM is a tool that allows you to create WebM video files with changing aspect ratios.
 
 If you're having issues, want to share your custom modes, or learn from the community join the Discord at the bottom of this readme.
