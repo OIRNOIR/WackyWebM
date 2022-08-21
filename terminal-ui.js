@@ -15,7 +15,6 @@ const { modes, args, main } = require('./wackywebm.js')
 const { getFileName } = require('./util')
 const fs = require('fs')
 
-// 0: select locale
 // 1: select mode to use
 // 2: optional and required flags
 // 3: file selection
@@ -132,6 +131,8 @@ term.on('key', (name) => {
 				keysToFlags['x'] = '--tempo'
 			else if (modeList[selectedMode] === 'angle')
 				keysToFlags['x'] = '--angle'
+			else if (modeList[selectedMode] === 'transparency')
+				keysToFlags['x'] = '--transparency'
 		}
 	} else if (stage === 2) {
 		if (editingText && name !== 'ENTER') {
@@ -200,11 +201,13 @@ term.on('key', (name) => {
 				flags['--angle'] = 360
 			if (!flags['--compression'])
 				flags['--compression'] = 0
+			if (!flags['--transparency'])
+				flags['--transparency'] = 1
 			if (!flags['--output'])
 				// not perfect, but works well enough
 				flags['--output'] = `${path.join(path.dirname(filename), getFileName(filename))}_${modeList[selectedMode]}.webm`
 
-			mainTask = main([modeList[selectedMode]], filename, flags['--keyframes'], flags['--bitrate'], flags['--thread'], flags['--tempo'], flags['--angle'], flags['--compression'], flags['--output'])
+			mainTask = main([modeList[selectedMode]], filename, flags['--keyframes'], flags['--bitrate'], flags['--thread'], flags['--tempo'], flags['--angle'], flags['--compression'], flags['--transparency'], flags['--output'])
 		}
 	} else if (stage === 5) {
 		if (mainTaskDone)

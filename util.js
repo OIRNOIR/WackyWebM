@@ -44,6 +44,10 @@ async function getAudioLevelMap(videoPath) {
 
 const getFileName = (p) => path.basename(p, path.extname(p))
 
+function getPixelIndexFromCoords(x, y, w) {
+	return y * w + x
+}
+
 // these are lambdas so that their value updates as locale changes.
 // this is bad for performance, but we don't call warn or error nearly often enough for it to be a big problem.
 const WARN = () => `\n${localizeString('warning_template')}\n`
@@ -53,4 +57,4 @@ const orgConsoleError = console.error
 console.warn = (m) => orgConsoleWarn(WARN(), m)
 console.error = (m) => orgConsoleError(ERROR(), m)
 
-module.exports = { delta, getAudioLevelMap, getFileName }
+module.exports = { delta, getAudioLevelMap, getFileName, getPixelIndexFromCoords }
