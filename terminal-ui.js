@@ -61,15 +61,15 @@ const redrawStage2 = () => {
 		// trouble for the marginal benefit, considering how rarely new ones get added.
 		for (const key of Object.keys(keysToFlags)) {
 			term.italic(key)
-			term(`: ${args.filter(a => a.keys.includes(keysToFlags[key]))[0].description}\n`)
+			term(`: ${args.filter(a => a.keys.includes(keysToFlags[key]))[0].description.replace(/%/g, '%%')}\n`)
 		}
 
 		term.bold.underline(`\n${localizeString('current_arg_values')}\n`)
 		for (const flag of Object.keys(flags))
-			term(`${flag} = "${flags[flag]}"\n`)
+			term(`${flag} = "${flags[flag].replace(/%/g, '%%')}"\n`)
 	} else {
 		term.bold.underline(`${localizeString('enter_arg_value', { arg: currentEdit })}\n`)
-		term.italic(currentText)
+		term.italic(currentText.replace(/%/g, '%%'))
 	}
 
 }
@@ -79,7 +79,7 @@ const redrawStage3 = () => {
 	term.clear()
 	term.bold.underline(`${localizeString('enter_file_path')}\n\n`)
 	editingText = true
-	term(filename)
+	term(filename.replace(/%/g, '%%'))
 }
 
 const redrawStage4 = () => {
@@ -91,10 +91,10 @@ const redrawStage4 = () => {
 	term('\n')
 	for (let argName of Object.keys(flags)) {
 		term.italic(`\t${argName}: `)
-		term(flags[argName] + '\n')
+		term(flags[argName].replace(/%/g, '%%') + '\n')
 	}
 	term.underline(localizeString('r_s_file'))
-	term(` ${filename}\n`)
+	term(` ${filename.replace(/%/g, '%%')}\n`)
 }
 
 let mainTask
