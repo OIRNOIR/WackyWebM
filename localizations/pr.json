@@ -1,1 +1,12 @@
-{}
+{
+    "no_translation": "UNTRANSLATED STRING",
+    "change_options": "T' change any options (all o' which are optional), press the correspondin' button. When ye be done, press enter.",
+    "current_arg_values": "currently set argument values:",
+    "enter_arg_value": "Please enter yer desired value fer the argument \"{arg}\", then press enter to confirm. Escape to cancel.",
+    "enter_file_path": "Please enter the path to the file ye wish to convert (includin' file name an', if applicable, extension)",
+    "review_settings": "These be the settings ye selected. If ye want to proceed, press enter. If not, exit the program (q or ctrl+c)",
+    "r_s_mode": "Mode:",
+    "r_s_args": "Modified Arguments:",
+    "select_mode_arrows": "Select Mode t' use wit' the arrow keys, then press enter t' confirm.",
+    "change_options_k": "T' change any options (all o' which except the keyframe file are optional), press the correspondin' button. When ye be done, press enter."
+}
