@@ -148,15 +148,6 @@ module.exports = {
 		let [lastWidth, lastHeight] = [keyFrames[lastKf].width, keyFrames[lastKf].height]
 		let [nextWidth, nextHeight] = lastKf === keyFrames.length - 1 ? [lastWidth, lastHeight] : [keyFrames[lastKf + 1].width, keyFrames[lastKf + 1].height]
 
-		if (keyFrames[lastKf + 1].interpolation.toLowerCase() === 'instant') {
-			// interpolate towards current size, instead of next one
-			// we do not just immediately return lastWidth and lastHeight here to prepare for possible future interpolations
-			// which might intentionally overshoot the target size and then bounce back - they should still do that, as long
-			// as they arrive at the right size.
-			nextWidth = lastWidth
-			nextHeight = lastHeight
-		}
-
 		switch (keyFrames[lastKf].interpolation.toLowerCase()) {
 			case 'linear':
 				return {

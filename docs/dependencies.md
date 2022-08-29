@@ -11,6 +11,8 @@ Importantly, when asked what to install, chose `Node.js runtime`, `npm package m
 
 Depending on your Operating System, you might have to log out and back in, or even restart your computer after installation for node to be accessible. To test if this is required, open a terminal and type `node --version` and `npm --version`. If both of them show a version number, you have successfully installed them and do not need to do anything else.
 
+Additionally, after installing node and npm themselves, you should run `npm i` in the project directory (the one where wackywebm.js is) to install some project-specific dependency libraries. The wrapper scripts, run.bat and run.sh, do this automatically for you, so it is only required if you plan to use the command-line interface.
+
 # FFmpeg
 
 To install FFmpeg, navigate to [ffmpeg.org](https://ffmpeg.org/download.html) and, unless you know what you're doing, download one of the pre-built packages, located to the bottom left of the two large green buttons on the download page.
