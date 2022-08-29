@@ -16,7 +16,7 @@ If you're having issues or want to share your custom modes, join the Discord Ser
 - FFprobe (included with FFmpeg)
 - Various NPM packages (simply run `npm i` in the project directory after installing node to install them automatically)
 
-Further information about dependencies and help installing them can be found [On this page](docs/dependencies.md)
+Further information about dependencies and help installing them can be found [on this page](docs/dependencies.md)
 
 ## Running
 
@@ -24,13 +24,13 @@ After you have finished installing the dependencies, download the WackyWebM sour
 
 ![image](https://user-images.githubusercontent.com/69131802/182936318-d3c542bc-99a6-4f01-91e0-944c4e9bc0b0.png)
 
-After Downloading the code, you can either use one of the wrapper scripts or use the command-line interface, which is slightly less intuitive, but, for some purposes, more powerful.
+After downloading the code, you can either use one of the wrapper scripts or use the command-line interface, which is slightly less intuitive, but, for some purposes, more powerful.
 
 ### General Notes
 
-- All Arguments are entirely optional, with the one exception of the Keyframe file if you are using the corresponding `Keyframes` mode (The Wrapper scripts force you to enter it, and you encounter an error when not specifying it on the command-line interface)
-- The Bitrate is measured in single bits per second and values that are significantly too low (like 10 bits/sec) will cause errors. Some Suffixes are Supported, like `k` for kilobits per second or `M` for megabits per second.
-- FFmpeg can error if a file does not have a file extension, like `*.webm`. This goes for both input and output files, even if the file content is valid data.
+- All arguments are entirely optional, with the one exception of the Keyframe file if you are using the corresponding `Keyframes` mode (The wrapper scripts force you to enter it, and you encounter an error when not specifying it on the command-line interface)
+- The bitrate is, by default, measured in single bits per second and values that are significantly too low (like 10 bits/sec) will cause errors. Some suffixes are supported, like `k` for kilobits per second or `M` for megabits per second.
+- FFmpeg can error if a file does not have a file extension, like `*.webm`. This is the case for both input and output files, even if the file content is otherwise valid data.
 - "Compression", in our sense, does *not* refer to intra-frame compression, like decreasing frames' resolution. Instead, it makes the transition between different video sizes less "smooth" by updating the size less often. Reasonable values for this are typically in the range of 10 to 20.
 
 

@@ -1,6 +1,6 @@
 # Keyframe File Format
 
-Every Line consists of 4 values, where one is optional and can be left out. They are all separated by comma characters (`,`)
+Every line consists of 4 values, where one is optional and can be left out. They are all separated by comma characters (`,`)
 
   - First, the time in the video of the keyframe. This is either of these two options:
     - One integer representing seconds in the video
@@ -8,15 +8,15 @@ Every Line consists of 4 values, where one is optional and can be left out. They
   - Next, the width of the video, followed by its height - both of these support some very basic mathematical expressions and some placeholders (for example `last/2` means to scale the video to half its size at the last keyframe)
   - Finally, the interpolation with which to advance towards the next keyframe - currently, the following are supported:
     - `linear`: linearly interpolates towards the next keyframe.
-    - `instant`: instantly jumps to the *next* keyframe at its time - unlike the name implies, it does *not* create a jump from the last keyframe to the current one.
+    - `instant`: instantly jumps to the *next* keyframe at its time - unlike the name might imply, it does *not* create a jump from the last keyframe to the current one.
 
-The interpolation mode is optional. if it is not written out, `linear` is assumed.
+The interpolation mode is optional and if not given, `linear` is used as a default.
 
 If it isn't overwritten, an implicit keyframe at 0 frames into the video is added with linear interpolation and the video's original size.
 
 To use this mode, add `-k` with the path to your file (do *not* supply the keyframe data itself to the `-k` flag).
 
-Also, Any lines that are entirely whitespace or start in a `#` character are ignored.
+Also, any lines that are entirely whitespace or start in a `#` character are ignored.
 
 # Example
 
