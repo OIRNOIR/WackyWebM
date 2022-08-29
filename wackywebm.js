@@ -225,12 +225,15 @@ function displayUsage() {
 }
 
 function ffmpegErrorHandler(e) {
-	console.error(
-		e.message
-			.split('\n')
-			.filter((m) => !m.startsWith('  configuration:'))
-			.join('\n')
-	)
+	// tl;dr of this mess of a regex, sort out all lines that are either:
+	//  - "ffmpeg version (.*)"
+	//  - "built with (.*)"
+	//  - "lib(.*)" (for example "libavutil", "libavcodec", plus version info for them)
+	//  - "configuration: (.*)"
+	// and then match everything after and including the first line that does not start in any of those ways (which is typically the "real" error)
+	const newMessage = /ffmpeg version [^\n]+\n(?:\s*built with [^\n]+\n|\s*lib[^\n]+\n|\s*configuration:[^\n]+\n)*([\s\S]*)/.exec(e.message)[1]
+	// throw again to let the wrapper (either `main()` at the bottom of this file, or the terminal-ui file) know we crashed
+	throw new Error(newMessage)
 }
 
 async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, transparencyThreshold, outputPath) {
@@ -469,7 +472,6 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 				lastHeight = frameBounds.height
 			} catch (e) {
 				ffmpegErrorHandler(e)
-				return
 			}
 		} else {
 			sameSizeCount++
@@ -522,4 +524,7 @@ if (parseCommandArguments() !== true) return
 
 // we're ignoring a promise (the one returned by main) here. this is by design and not harmful, so ignore the warning
 // noinspection JSIgnoredPromiseFromCall
-main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, transparencyThreshold, outputPath)
+main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, transparencyThreshold, outputPath).catch(e => {
+	console.error(localizeString('cli_crash'))
+	console.error(e)
+})
