@@ -13,7 +13,7 @@ module.exports = {
 	},
 	getFrameBounds: (info) => {
 		if (info.frame === 0) {
-			const maxSize = Math.floor(info.maxWidth * Math.abs(Math.cos(Math.PI / 4)) + info.maxHeight * Math.abs(Math.sin(Math.PI / 4))) + util.delta
+			const maxSize = Math.floor(info.maxWidth * Math.abs(Math.cos(Math.PI / 4)) + info.maxHeight * Math.abs(Math.sin(Math.PI / 4)))
 			return {
 				width: maxSize,
 				height: maxSize,
@@ -22,8 +22,8 @@ module.exports = {
 
 		rotateAngle += info.angle / info.frameRate
 		const angle = rotateAngle * (Math.PI / 180)
-		const width = Math.floor(Math.max(orgWidth, orgWidth * Math.abs(Math.cos(angle)) + orgHeight * Math.abs(Math.sin(angle)))) + util.delta
-		const height = Math.floor(Math.max(orgHeight, orgWidth * Math.abs(Math.sin(angle)) + orgHeight * Math.abs(Math.cos(angle)))) + util.delta
+		const width = Math.floor(Math.max(orgWidth, orgWidth * Math.abs(Math.cos(angle)) + orgHeight * Math.abs(Math.sin(angle))))
+		const height = Math.floor(Math.max(orgHeight, orgWidth * Math.abs(Math.sin(angle)) + orgHeight * Math.abs(Math.cos(angle))))
 
 		return {
 			width: width,

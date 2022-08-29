@@ -5,8 +5,60 @@
 const util = require('util')
 const path = require('path')
 const { localizeString } = require('./localization.js')
-// These could be arguments, as well. They could also be taken via user input with readline.
-const delta = 1
+
+function findMinimumNonErrorSize(width, height) {
+	const getGcd = (a, b) => b ? getGcd(b, a % b) : a
+
+	const av_reduce_succeeds = (num, den) => {
+		const max = 255
+
+		let a0 = [0, 1]
+		let a1 = [1, 0]
+		const gcd = getGcd(num, den)
+
+		if (gcd !== 0) {
+			num = Math.floor(num / gcd)
+			den = Math.floor(den / gcd)
+		}
+
+		if (num <= max && den <= max) {
+			a1 = [num, den]
+			den = 0
+		}
+
+		while (den !== 0) {
+			let x = Math.floor(num / den)
+			let next_den = num - den * x
+			let a2n = x * a1[0] + a0[0]
+			let a2d = x * a1[1] + a0[1]
+
+			if (a2n > max || a2d > max) {
+				if (a1[0] !== 0)
+					x = Math.floor((max - a0[0]) / a1[0])
+				if (a1[1] !== 0)
+					x = Math.min(x, Math.floor((max - a0[1]) / a1[1]))
+
+				if (den * (2 * x * a1[1] + a0[1]) > num * a1[1])
+					a1 = [x * a1[0] + a0[0], x * a1[1] + a0[1]]
+				break
+			}
+
+			a0 = a1
+			a1 = [a2n, a2d]
+			num = den
+			den = next_den
+		}
+
+		return getGcd(a1[0], a1[1]) <= 1 && (a1[0] <= max && a1[1] <= max) && a1[0] > 0 && a1[1] > 0
+	}
+
+	// *very* suboptimal, but this function only runs once, and even 1000 iterations are pretty fast, so whatever...
+	for (let i = 1; i <= Math.max(width, height); i++) {
+		if (av_reduce_succeeds(i, height) && av_reduce_succeeds(width, i)) {
+			return i
+		}
+	}
+}
 
 // In case audio level readouts throw an "-inf"
 // this will make it Javascript's negative infinity.
@@ -57,4 +109,4 @@ const orgConsoleError = console.error
 console.warn = (m) => orgConsoleWarn(WARN(), m)
 console.error = (m) => orgConsoleError(ERROR(), m)
 
-module.exports = { delta, getAudioLevelMap, getFileName, getPixelIndexFromCoords }
+module.exports = { getAudioLevelMap, getFileName, findMinimumNonErrorSize, getPixelIndexFromCoords }

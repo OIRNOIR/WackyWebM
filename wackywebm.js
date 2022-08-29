@@ -10,7 +10,7 @@ const fs = require('fs')
 // Synchronous execution via promisify.
 const util = require('util')
 // I'll admit, inconvenient naming here.
-const { delta, getFileName } = require('./util')
+const { getFileName, findMinimumNonErrorSize } = require('./util')
 const { localizeString, setLocale } = require('./localization')
 const execAsync = util.promisify(require('child_process').exec)
 const UPNG = require("upng-js")
@@ -282,7 +282,6 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	buildLocations()
 
 	// Use one call to ffprobe to obtain framerate, width, and height, returned as JSON.
-	console.log(localizeString('info1', { delta, video: videoPath }))
 	const videoInfo = await execAsync(`ffprobe -v error -select_streams v -of json -count_frames -show_entries stream=r_frame_rate,width,height,nb_read_frames,bit_rate "${videoPath}"`, { maxBuffer: 1024 * 1000 * 8 /* 8mb */ })
 	// Deconstructor extracts these values and renames them.
 	let {
@@ -293,6 +292,11 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 	frameCount = Number(frameCount)
 	const decimalFramerate = framerate.includes('/') ? Number(framerate.split('/')[0]) / Number(framerate.split('/')[1]) : Number(framerate)
 	if (bitrate == null) bitrate = Math.min(originalBitrate ?? 500000, 1000000)
+
+	const delta = findMinimumNonErrorSize(maxWidth, maxHeight)
+
+	console.log(localizeString('info1', { delta, video: videoPath }))
+
 
 	// Make folder tree using NodeJS promised mkdir with recursive enabled.
 	console.log(localizeString('info2', { w: maxWidth, h: maxHeight, framerate, decframerate: decimalFramerate, bitrate: originalBitrate}))
@@ -388,6 +392,9 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 		const frameBounds = { width: maxWidth, height: maxHeight }
 		for (const mode of selectedModes)
 			Object.assign(frameBounds, modes[mode].getFrameBounds(infoObject))
+
+		frameBounds.width = Math.max(Math.min(frameBounds.width, maxWidth), delta)
+		frameBounds.height = Math.max(Math.min(frameBounds.height, maxHeight), delta)
 
 		if (frame === 0) {
 			lastWidth = frameBounds.width
