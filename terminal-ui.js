@@ -102,10 +102,16 @@ let mainTaskDone = false
 const redrawStage5 = async () => {
 	if (!mainTaskDone) {
 		term.clear()
-		await mainTask
+		try {
+			await mainTask
+			term('\n\n\n')
+			term.bold.underline(localizeString('tui_done'))
+		} catch (e) {
+			term('\n\n\n')
+			term.bold.underline(localizeString('tui_error') + '\n')
+			console.error(e)
+		}
 		mainTaskDone = true
-		term('\n\n\n')
-		term.bold.underline(localizeString('tui_done'))
 	}
 }
 

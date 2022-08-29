@@ -48,5 +48,7 @@
 	"error_during_update": "An error has occured while attempting to check for updates: {error}",
 	"newer_version_available": "A newer version is available. Please consider updating.",
 	"excess_keyframes": "Excess KeyFrame found at frame {time}!",
-	"unrecognized_interpolation": "Unrecognized interpolation mode {which}, using initial width/height."
+	"unrecognized_interpolation": "Unrecognized interpolation mode {which}, using initial width/height.",
+	"tui_error": "The following error occurred while running WackyWebM. Press any key to close this interface.",
+	"cli_crash": "While processing, the following error occurred:"
 }
