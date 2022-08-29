@@ -22,7 +22,14 @@ where /q node || echo Node could not be found && exit /B
 where /q npm || echo npm could not be found && exit /B
 
 echo Installing Dependencies - this might take a while the first time.
-call npm i
+call npm i >NUL 2>npm.log || (
+  echo Issue installing dependencies using npm.
+  echo Error:
+  type npm.log
+  del npm.log
+  echo Exiting...
+  exit /b
+)
 
 echo Enter the language you want to use, or press enter for the default (english)
 set /p "lang= "
