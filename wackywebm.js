@@ -214,7 +214,7 @@ function displayUsage() {
 	const longestKeys = argsConfig.map((a) => a.keys.join(',')).sort((a, b) => b.length - a.length)[0].length
 	const Usage =
 		'WackyWebM by OIRNOIR#0032\n' +
-		'Usage: node wackywebm.js [-o output_file_path] [optional_type] [-k keyframe_file] <input_file>\n' +
+		'Usage: node wackywebm.js [arguments] [mode] <input_file>\n' +
 		argsConfig.map((arg) => `\t${(arg.keys.join(',') + ':').padEnd(longestKeys + 1, ' ')}  ${arg.description}`).join('\n') +
 		'\nRecognized Modes:\n' +
 		Object.keys(modes)

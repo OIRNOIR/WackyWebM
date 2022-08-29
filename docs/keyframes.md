@@ -1,0 +1,8 @@
+- Every line consists of 4 (or 3) comma-seperated values:
+  - first, the time in the video of the keyframe; either one integer representing seconds, or two, seperated by any one of the characters `.`, `:` or `-`, where the first still represents seconds, and the second represents frames.
+  - next, the width, then the height at that keyframe (in pixels)
+  - finally, the interpolation with which to advance towards the next keyframe - currently, the following are supported:
+    - `linear`: linearly interpolates towards the next keyframe. if the line only contains 3 values, this mode is implied, so it is not required to be written out every time.
+    - `instant`: instantly sets the size to the given values
+- If it isn't overwritten, an implicit keyframe at 0 frames into the video is added with linear interpolation and the video's original size.
+- To use this mode, add `-k` with the path to your csv file.

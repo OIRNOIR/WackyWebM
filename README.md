@@ -5,10 +5,9 @@
 ![GitHub Repo stars](https://img.shields.io/github/stars/oirnoir/wackywebm?style=for-the-badge)
 [![Discord](https://img.shields.io/discord/1003791722574266488?style=for-the-badge)](https://discord.gg/wackywebm)
 
-
 WackyWebM is a tool that allows you to create WebM video files with changing aspect ratios.
 
-If you're having issues, want to share your custom modes, or learn from the community join the Discord at the bottom of this readme.
+If you're having issues or want to share your custom modes, join the Discord Server at the bottom of this Readme.
 
 ## Dependencies
 
@@ -17,84 +16,50 @@ If you're having issues, want to share your custom modes, or learn from the comm
 - FFprobe (included with FFmpeg)
 - Various NPM packages (simply run `npm i` in the project directory after installing node to install them automatically)
 
-## NodeJS
+Further information about dependencies and help installing them can be found [On this page](docs/dependencies.md)
 
-To begin installation, you must install NodeJS first. You can find the NodeJS download [here.](https://nodejs.org/en/download)
+## Running
 
-Select your OS, and use the installer. After finished installing, click the `finish` button.
-
-![image](https://user-images.githubusercontent.com/69131802/182696287-ae753806-0946-4742-9f73-2cb4d1ee78f2.png)
-
-## FFmpeg
-
-After installing NodeJS, you need to download FFmpeg next. To install FFmpeg you need to go to [this](https://ffmpeg.org) link and select the green Download button.
-
-![image](https://user-images.githubusercontent.com/69131802/182697226-0a60be60-8a6d-433b-bc91-2627266f6058.png)
-
-### Windows
-
-To download FFmpeg for Windows, navigate to the Windows logo and select `Windows builds by BtbN` after that, it is recommended to select `ffmpeg-master-latest-win64-gpl-shared.zip`
-
-Once downloaded, unzip the file and move it to somewhere safe.
-
-Select that folder, then rename it to `ffmpeg`
-
-![image](https://user-images.githubusercontent.com/69131802/182937764-c2a842b4-f96e-4b09-b9f4-ac8896b2d38e.png)
-
-Copy the unzipped folder, direct to This PC, enter your C: drive and paste the `ffmpeg` folder in there.
-
-![image](https://user-images.githubusercontent.com/69131802/182937173-231ae1dd-19b2-4551-9f9f-228cc353b0f8.png)
-
-After moving the ffmpeg folder into your C: drive, open Command Prompt with administrator and run this: setx /m PATH "C:\ffmpeg\bin;%PATH%" (If, for some reason, you are unable to run Command Prompt with administrator permissions, you can hit the windows key, then type "edit environment variables for your account" and hit enter, then you need to click "Path", then click "Edit," then you click "New" and paste in "C:\ffmpeg\bin" and then make sure to click "Ok" in both windows).
-
-Now, type in "ffmpeg" to the command prompt. If you get an error, you need to log out and log back in, run ffmpeg inside of the command prompt window once more, and if you do not get an error you're all set. If you still get an error, you can try restarting your computer, and typing "ffmpeg" into the command prompt again. If it still doesn't work, you can get help in #support in [this](https://discord.gg/TmyJfq49AP) discord server.
-
-### MacOS
-
-For MacOS users, refer to [this](https://bbc.github.io/bbcat-orchestration-docs/installation-mac-manual/) tutorial for FFmpeg installation.
-
-### Linux
-
-For Linux users, refer to [this](https://www.tecmint.com/install-ffmpeg-in-linux/) tutorial for FFmpeg installation.
-
-## How to Run
-
-After you have finished installing the dependencies, download the WackyWebM folder by clicking the `Code` button in the top right of this page, followed by clicking `Download ZIP`
+After you have finished installing the dependencies, download the WackyWebM source code by either running `git clone https://github.com/OIRNOIR/WackyWebM.git` or by clicking the green button to the top right of the directory listing, then clicking "Download ZIP" and then extracting the downloaded archive.
 
 ![image](https://user-images.githubusercontent.com/69131802/182936318-d3c542bc-99a6-4f01-91e0-944c4e9bc0b0.png)
 
-Once the ZIP is fully installed, you need to extract the folder inside. After doing this, you are set.
+After Downloading the code, you can either use one of the wrapper scripts or use the command-line interface, which is slightly less intuitive, but, for some purposes, more powerful.
 
-On Windows, use the `run.bat` file to start WackyWebM.
+### General Notes
 
-On MacOS and Linux, use `chmod +x run.sh` then `sh run.sh` file to start WackyWebM
+- All Arguments are entirely optional, with the one exception of the Keyframe file if you are using the corresponding `Keyframes` mode (The Wrapper scripts force you to enter it, and you encounter an error when not specifying it on the command-line interface)
+- The Bitrate is measured in single bits per second and values that are significantly too low (like 10 bits/sec) will cause errors. Some Suffixes are Supported, like `k` for kilobits per second or `M` for megabits per second.
+- FFmpeg can error if a file does not have a file extension, like `*.webm`. This goes for both input and output files, even if the file content is valid data.
+- "Compression", in our sense, does *not* refer to intra-frame compression, like decreasing frames' resolution. Instead, it makes the transition between different video sizes less "smooth" by updating the size less often. Reasonable values for this are typically in the range of 10 to 20.
 
-If you're on windows, you can simply double-click run.bat, as long as it's in the same folder as wackywebm.js.
 
-You can also tweak the script to taste if you want to adjust how your file is generated.
+### Using the Wrapper Scripts
 
-You can also change the bitrate of the output file by tweaking -b (Default is 1M, which means 1 MB/s. If the file is too large, consider lowering this value.)
+On Unix-Like Operating Systems, like Linux or MacOS, run `run.sh` by running `sh run.sh` (or, in some cases, double-clicking the file - this might not always work though)
+
+On Windows, double-click `run.bat`.
+
+In case of an error, please run the script again from a terminal you manually started (by navigating to the folder and then running the appropriate command), instead of just double-clicking the file, so that it stays open after crashing and you can read the error (and potentially ask about it)
+
+### Using the Command-Line Interface
+
+To get an accurate and up-to-date list of all recognized arguments, simply run `node wackywebm.js --help` from within the project directory. Then, just run `node wackywebm.js <ARGUMENTS> <input file>`, where `<ARGUMENTS>` is simply a list of arguments like `-b 500000 -o path/to/output/file.webm`.
+
+You do not need to quote the input file's path, even if it contains spaces, however it is recommended and if you experience issues that involve not finding the input file, please try that first.
 
 ## Modes
 
-- `Bounce` (Default): The video bounces up and down.
-- `Shutter`: The video bounces left to right.
+- `Bounce` (Default): The video's height periodically increases and decreases.
+- `Shutter`: The video's width periodically increases and decreases.
 - `Sporadic`: The video glitches and wobbles randomly.
-- `Shrink`: The video shrinks vertically until it's just one pixel thin.
-- `AudioBounce`: The video's vertical height changes relative to the current audio level verses the highest within the video.
-- `AudioShutter`: The video's horizontal width changes relative to the current audio level verses the highest within the video.
-- `Transparency`: Crops the video so that transparent pixels are excluded from the final result.
-- `Keyframes`: The video's height and width change based on a number of keyframes outlined in the file given as an argument. The format is as follows:
-  - Every line consists of 4 (or 3) comma-seperated values:
-    - first, the time in the video of the keyframe; either one integer representing seconds, or two, seperated by any one of the characters `.`, `:` or `-`, where the first still represents seconds, and the second represents frames.
-    - next, the width, then the height at that keyframe (in pixels)
-    - finally, the interpolation with which to advance towards the next keyframe - currently, the following are supported:
-      - `linear`: linearly interpolates towards the next keyframe. if the line only contains 3 values, this mode is implied, so it is not required to be written out every time.
-      - `instant`: instantly sets the size to the given values
-  - If it isn't overwritten, an implicit keyframe at 0 frames into the video is added with linear interpolation and the video's original size.
-  - To use this mode, add `-k` with the path to your csv file.
+- `Shrink`: The video shrinks vertically from full height to just one pixel over its entire duration.
+- `AudioBounce`: The video's height changes relative to the current audio level compared to the highest within the video.
+- `AudioShutter`: The video's width changes relative to the current audio level compared to the highest within the video.
+- `Transparency`: Crops the video so that transparent pixels are excluded from the final result. (the result will still always be a rectangle)
+- `Keyframes`: The video's height and width change based on a number of keyframes outlined in the file given as an argument. The format for said file is Described [Here](docs/keyframes.md).
 
-Additionally, any 2 modes can be combined using a + symbol, like Bounce+Shutter. If one only specifies width, and one only specifies height, then those respective values are used. If there is a conflict, the value from the latter of the 2 modes is used (so Shrink+Bounce would result in the same effect as just Bounce)
+Additionally, any 2 modes can be combined using a + symbol, like `Bounce+Shutter`. If one of the modes only specifies width, and one only specifies height, then those respective values are used. If there is a conflict, the value from the latter of the 2 modes is used (so `Shrink+Bounce` would result in the same effect as just `Bounce`, since it overwrites `Shrink`'s change in height.)
 
 ## Support
 
