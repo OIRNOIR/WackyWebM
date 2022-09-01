@@ -31,8 +31,8 @@
     "starting_conversion": "Konvertiere Einzelbilder zu WebM-Dateien...",
     "done_conversion": "Konvertierte erfolgreich alle {framecount} Bilder in {time}ms",
     "writing_concat_file": "Schreibe Konkatenationsdatei...",
-    "concatenating": "Ziehe Segmente in finale WebM-Datei zusammen...",
-    "concatenating_audio": "Ziehe Segmente und Audio in finale WebM-Datei zusammen...",
+    "concatenating": "Ziehe Segmente in finale WebM-Datei zusammen",
+    "concatenating_audio": "Ziehe Segmente und Audio in finale WebM-Datei zusammen",
     "select_mode_arrows": "Zu verwendenden Modus über die Pfeiltasten auswählen, dann mit Enter bestätigen.",
     "change_options": "Um Optionen zu ändern (von denen alle optional sind), den jeweils angezeigten Knopf drücken. Wenn Sie fertig sind, drücken Sie Enter.",
     "enter_arg_value": "Bitte geben Sie ihren gewünschten Wert für das Argument \"{arg}\" ein und drücken sie Enter zum bestätigen oder Escape zum Abbrechen.",
@@ -48,5 +48,7 @@
     "no_translation": "NICHT ÜBERSETZTER TEXT",
     "newer_version_available": "Eine neuere Version ist verfügbar. Bitte ziehe in Betracht, zu updaten.",
     "excess_keyframes": "Überflüssiger Keyframe in Bild {time} gefunden!",
-    "unrecognized_interpolation": "Nicht erkannter Interpolationsmodus \"{which}\" gefunden, verwende initiale Breite und Höhe."
+    "unrecognized_interpolation": "Nicht erkannter Interpolationsmodus \"{which}\" gefunden, verwende initiale Breite und Höhe.",
+    "tui_error": "Der folgende Fehler trat während des Ausführens von WackyWebM auf. Drücken Sie eine beliebige Taste, um das Interface zu schließen.",
+    "cli_crash": "Während des Bearbeitens ist der folgende Fehler aufgetreten:"
 }
