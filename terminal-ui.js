@@ -50,7 +50,8 @@ const keysToFlags = {
 	'b': '--bitrate',
 	't': '--thread',
 	'o': '--output',
-	'c': '--compression'
+	'c': '--compression',
+	's': '--smoothing'
 }
 
 const redrawStage2 = () => {
@@ -209,11 +210,22 @@ term.on('key', (name) => {
 				flags['--compression'] = 0
 			if (!flags['--transparency'])
 				flags['--transparency'] = 1
+			if (!flags['--smoothing'])
+				flags['--smoothing'] = 0
 			if (!flags['--output'])
 				// not perfect, but works well enough
 				flags['--output'] = `${path.join(path.dirname(filename), getFileName(filename))}_${modeList[selectedMode]}.webm`
 
-			mainTask = main([modeList[selectedMode]], filename, flags['--keyframes'], flags['--bitrate'], flags['--thread'], flags['--tempo'], flags['--angle'], flags['--compression'], flags['--transparency'], flags['--output'])
+			mainTask = main([modeList[selectedMode]], filename, {
+				keyframes: flags['--keyframes'],
+				bitrate: flags['--bitrate'],
+				thread: flags['--thread'],
+				tempo: flags['--tempo'],
+				angle: flags['--angle'],
+				compression: flags['--compression'],
+				transparency: flags['--transparency'],
+				smoothing: flags['--smoothing']
+			}, flags['--output'])
 		}
 	} else if (stage === 5) {
 		if (mainTaskDone)
