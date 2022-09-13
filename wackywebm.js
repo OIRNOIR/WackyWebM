@@ -38,7 +38,8 @@ let selectedModes = [],
 	angle = undefined,
 	compressionLevel = undefined,
 	updateCheck = true,
-	transparencyThreshold = undefined
+	transparencyThreshold = undefined,
+	smoothingLevel = undefined
 
 // NOTE! if you add a new option, please check out if anything needs to be added for it into terminal-ui.js
 
@@ -125,6 +126,13 @@ const argsConfig = [
 		call: (v) => { transparencyThreshold = parseInt(v) },
 		getValue: () => transparencyThreshold,
 		description: 'sets the transparency threshold for use with the "transparency" mode'
+	},
+	{
+		keys: ['-s', '--smoothing'],
+		default: () => { smoothingLevel = 0 },
+		call: (v) => { smoothingLevel = parseInt(v) },
+		getValue: () => smoothingLevel,
+		description: 'Sets the level of smoothing to apply'
 	}
 ]
 
@@ -236,7 +244,16 @@ function ffmpegErrorHandler(e) {
 	throw new Error(newMessage)
 }
 
-async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, transparencyThreshold, outputPath) {
+async function main(selectedModes, videoPath, args, outputPath) {
+	let { keyframes: keyFrameFile, bitrate, thread: maxThread, tempo, angle, compression: compressionLevel, transparency: transparencyThreshold, smoothing } = args;
+	// mainly for the terminal-ui, where arguments are not parsed and are passed as strings
+	maxThread = parseInt(maxThread)
+	tempo = parseFloat(tempo)
+	angle = parseFloat(angle)
+	compressionLevel = parseInt(compressionLevel)
+	transparencyThreshold = parseInt(transparencyThreshold)
+	smoothing = parseInt(smoothing)
+
 	if (updateCheck) {
 		// before doing anything else, so it gets displayed even in case of error, check if we have the latest version.
 		let ourVersion = fs.existsSync(path.join(__dirname, 'hash')) ? fs.readFileSync(path.join(__dirname, 'hash')).toString().trim() : 'string that never matches any git commit hash.\ngithub user that does not exist!"§%$&';
@@ -383,6 +400,10 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 
 	const loadFrameData = selectedModes.filter(mode => modes[mode].requiresFrameData).length !== 0
 
+	const frameSizeSmoothingBuffer = Array(smoothing)
+	frameSizeSmoothingBuffer.fill([maxWidth, maxHeight], 0, smoothing)
+	let fssbIndex = 0
+
 	// Creates the respective resized frame based on the selected mode.
 	for (const { file } of tempFramesFrames) {
 		// since it is quite an expensive operation, only load frame data if it's required
@@ -398,6 +419,15 @@ async function main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, 
 
 		frameBounds.width = Math.max(Math.min(frameBounds.width, maxWidth), delta)
 		frameBounds.height = Math.max(Math.min(frameBounds.height, maxHeight), delta)
+
+		if (smoothing !== 0) {
+			frameSizeSmoothingBuffer[fssbIndex++] = [frameBounds.width, frameBounds.height]
+			fssbIndex %= smoothing
+
+			frameBounds.width = Math.floor(frameSizeSmoothingBuffer.reduce((s, e) => s + e[0], 0) / smoothing)
+			frameBounds.height = Math.floor(frameSizeSmoothingBuffer.reduce((s, e) => s + e[1], 0) / smoothing)
+		}
+
 
 		if (frame === 0) {
 			lastWidth = frameBounds.width
@@ -524,7 +554,16 @@ if (parseCommandArguments() !== true) return
 
 // we're ignoring a promise (the one returned by main) here. this is by design and not harmful, so ignore the warning
 // noinspection JSIgnoredPromiseFromCall
-main(selectedModes, videoPath, keyFrameFile, bitrate, maxThread, tempo, angle, compressionLevel, transparencyThreshold, outputPath).catch(e => {
+main(selectedModes, videoPath, {
+		keyframes: keyFrameFile,
+		bitrate,
+		thread: maxThread,
+		tempo,
+		angle,
+		compression: compressionLevel,
+		transparency: transparencyThreshold,
+		smoothing: smoothingLevel
+	}, outputPath).catch(e => {
 	console.error(localizeString('cli_crash'))
 	console.error(e)
 })
