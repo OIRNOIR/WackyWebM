@@ -13,6 +13,17 @@ const util = require('util')
 const { getFileName, findMinimumNonErrorSize } = require('./util')
 const { localizeString, setLocale } = require('./localization')
 const execAsync = util.promisify(require('child_process').exec)
+
+if (!fs.existsSync(__dirname + "/node_modules")) {
+	console.log("You haven't installed the nececary dependencies yet!\nPlease run \"npm install\" in the same folder as wackywebm.js and try again.");
+	// Alternatively, we could have it automatically install dependencies for the user.
+	/*(async () => {
+		await execAsync(`cd ${__dirname} && npm i`);
+		// Restart the program somehow
+	})();*/
+	return;
+}
+
 const UPNG = require("upng-js")
 
 const modes = {}
