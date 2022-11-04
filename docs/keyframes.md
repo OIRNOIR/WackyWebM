@@ -1,6 +1,15 @@
+# Keyframe File
+
+In order to use keyframe mode, you must have a separate file describing your keyframes. Create a text file in the same directory you are running WackyWebM. Fill the
+file in as detailed below.
+
+Keyframes also require the `-k` argument in the command line. The complete command (with no other arguments) would look like this:
+
+`node wackywebm.js -k <keyframefile.txt> keyframes <input_file>`
+
 # Keyframe File Format
 
-Every line consists of 4 values, where one is optional and can be left out. They are all separated by comma characters (`,`)
+Every line describes a keyframe, and consists of 4 values. The last value is optional and can be left out. They are all separated by comma characters (`,`)
 
   - First, the time in the video of the keyframe. This is either of these two options:
     - One integer representing seconds in the video
@@ -22,8 +31,8 @@ Also, any lines that are entirely whitespace or start in a `#` character are ign
 
     # for easier explanations, lets assume the original video is 1000x1000 pixels.
 
-    # this "jumps" the video size to 300x300 at the very first frame, and then slowly
-    # interpolates towards the next frame (because "linear" is implied)
+    # 0.1 means 0 seconds and 1 frame. this "jumps" the video size to 300x300 at the very first frame, 
+    # and then slowly interpolates towards the next frame (because "linear" is implied)
     0.1, 300, 300
 
     # after 1.5 seconds, the video would be approximately 450 pixels in width and 225 in height,
@@ -31,9 +40,10 @@ Also, any lines that are entirely whitespace or start in a `#` character are ign
     # it's expected that the size is roughly halfway between 300x300 and 600x150
     3, last*2, last/2
 
-    # slowly scale the video up to 1000x1000 over 7 seconds, then keep it there for 5 seconds
-    # (until the next keyframe), where it "jumps" to 100x100
+    # slowly scale the video up to 1000x1000 (the original resolution) over 7 seconds, then keep it there until the next keyframe
+    # (in this case, for 5 seconds) where it "jumps" to 100x100
     10, original, original, instant
+    
     15, 100, 100
     # since there are no further keyframes after this one, the video stays at the size of
     # 100x100 pixels from 15 seconds until the end.
