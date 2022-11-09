@@ -6,6 +6,7 @@ By OIRNOIR#0032
 */
 
 const path = require('path')
+const os = require('os')
 const fs = require('fs')
 // Synchronous execution via promisify.
 const util = require('util')
@@ -218,14 +219,18 @@ function parseCommandArguments() {
 const workLocations = {}
 
 function buildLocations() {
-	// maybe use `os.tmpdir()` instead of the cwd?
-	workLocations.tempFolder = path.join(__dirname, 'tempFiles')
+	workLocations.tempFolder = path.join(os.tmpdir(), 'WackyWebM')
 	workLocations.tempAudio = path.join(workLocations.tempFolder, 'tempAudio.webm')
 	//workLocations.tempVideo = path.join(workLocations.tempFolder, 'tempVideo.webm')
 	workLocations.tempConcatList = path.join(workLocations.tempFolder, 'tempConcatList.txt')
 	workLocations.tempFrames = path.join(workLocations.tempFolder, 'tempFrames')
 	workLocations.tempFrameFiles = path.join(workLocations.tempFrames, '%d.png')
 	workLocations.tempResizedFrames = path.join(workLocations.tempFolder, 'tempResizedFrames')
+}
+
+async function cleanupLocations() {
+	// always call on exit, even if erroneous, hopefully
+	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
 
 function displayUsage() {
@@ -328,8 +333,6 @@ async function main(selectedModes, videoPath, args, outputPath) {
 
 	console.log(localizeString('info1', { delta, video: videoPath }))
 
-
-	// Make folder tree using NodeJS promised mkdir with recursive enabled.
 	console.log(localizeString('info2', { w: maxWidth, h: maxHeight, framerate, decframerate: decimalFramerate, bitrate: originalBitrate}))
 
 	// Print config
@@ -342,7 +345,7 @@ async function main(selectedModes, videoPath, args, outputPath) {
 	console.log(localizeString('config_footer'))
 
 	// Create temp folder
-	console.log(localizeString('creating_temp_dirs'))
+	console.log(localizeString('creating_temp_dirs', { path: workLocations.tempFolder }))
 	await fs.promises.mkdir(workLocations.tempFrames, { recursive: true })
 	await fs.promises.mkdir(workLocations.tempResizedFrames, { recursive: true })
 
@@ -552,7 +555,7 @@ async function main(selectedModes, videoPath, args, outputPath) {
 
 	// Recursive removal of temporary files via the main temporary folder.
 	console.log(localizeString('done_removing_temp'))
-	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
+	await cleanupLocations()
 }
 
 module.exports = { modes, main, args: argsConfig, run: main }
@@ -575,6 +578,8 @@ main(selectedModes, videoPath, {
 		transparency: transparencyThreshold,
 		smoothing: smoothingLevel
 	}, outputPath).catch(e => {
-	console.error(localizeString('cli_crash'))
-	console.error(e)
+		// nothing SHOULD ever go wrong with removing the directory, unless we somehow manage to error *before* it is created
+		cleanupLocations().error(()=>{})
+		console.error(localizeString('cli_crash'))
+		console.error(e)
 })
