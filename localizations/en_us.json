@@ -34,7 +34,7 @@
 	"rotate_speed": "Rotation Speed: {angle}° per second",
 	"keyframe_file": "Keyframe file: {file}",
 	"output_bitrate": "Output Bitrate: {bitrate}",
-	"creating_temp_dirs": "Creating temporary directories...",
+	"creating_temp_dirs": "Creating temporary directory in {path}...",
 	"splitting_audio": "Splitting audio into a temporary file...",
 	"no_audio": "No audio detected.",
 	"splitting_frames": "Splitting file into frames...",
