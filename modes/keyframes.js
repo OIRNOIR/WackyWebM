@@ -111,8 +111,8 @@ async function parseKeyFrameFile(keyFrameFile, framerate, originalWidth, origina
 	// evaluate expressions for width/height
 	// can't use map here, since we access previous elements from within the later ones.
 	for (let dataIndex = 0; dataIndex < data.length; dataIndex++) {
-		data[dataIndex].width = evaluatePostfix(data[dataIndex].width, false)
-		data[dataIndex].height = evaluatePostfix(data[dataIndex].height, true)
+		data[dataIndex].width = evaluatePostfix(data[dataIndex].width, false, data, dataIndex, originalHeight, originalWidth)
+		data[dataIndex].height = evaluatePostfix(data[dataIndex].height, true, data, dataIndex, originalHeight, originalWidth)
 	}
 
 	keyFrames = data
