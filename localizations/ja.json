@@ -25,7 +25,7 @@
     "bounce_speed": "バウンス速度: {tempo}回/秒",
     "keyframe_file": "キーフレームファイル: {file｝",
     "output_bitrate": "出力ビットレート: {bitrate}",
-    "creating_temp_dirs": "一時的なディレクトリの作成...",
+    "creating_temp_dirs": "{path}に一時ディレクトリを作成中...",
     "no_audio": "音声が検出されませんでした。",
     "splitting_frames": "ファイルをフレームに分割中...",
     "enter_file_path": "変換したい動画ファイルのパスを入力してください（ファイル名と、場合によっては拡張子も必要です。）",
@@ -40,7 +40,7 @@
     "done_removing_temp": "完了！\n一時ファイルを削除中...",
     "error_during_update": "アップデートを確認中にエラーが発生しました: {error}",
     "newer_version_available": "より新しいバージョンをご利用いただけます。更新をご検討ください。",
-    "unrecognized_interpolation": "認識できない補間モード {which} で、初期の 幅/高さ を使用しています。",
+    "unrecognized_interpolation": "認識できない補間モード{mode}です。",
     "excess_keyframes": "フレーム {time} で余分なキーフレームが見つかりました！",
     "no_translation": "未翻訳の文字列",
     "review_settings": "選択した設定です。続行する場合は、エンターキーを押してください。そうでない場合は、プログラムを終了します（QまたはCtrl+C）",
@@ -50,5 +50,9 @@
     "error_template": "[エラー] %s",
     "kf_file_required": "キーフレームファイルが必要ですが、何も指定されていません。",
     "tui_error": "WackyWebMの実行中に次のエラーが発生しました。いずれかのキーを押して、このインターフェイスを閉じてください。",
-    "cli_crash": "処理中に以下のエラーが発生しました:"
+    "cli_crash": "処理中に以下のエラーが発生しました:",
+    "large_frame_specifier": "キーフレームファイルの{line}行目にある時間指定子のフレーム構成要素は、1秒以上に相当します。これは、特定の秒数を指定するものではありません。",
+    "invalid_time": "{line}行目のキーフレームファイルの時間指定が無効です: {input}",
+    "not_enough_fields": "キーフレームファイルの{line}行目にあるカンマ区切りのフィールドが少なすぎます。",
+    "too_many_fields": "キーフレームファイルの{line}行目には、カンマで区切られたフィールドが多すぎます。"
 }
