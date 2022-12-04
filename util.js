@@ -80,6 +80,10 @@ async function getAudioLevelMap(videoPath) {
 	//return intermediateMap.map(v => ({ percentMax: 1 - (highest.dBs / v.dBs), ...v })) // Shrink when louder.
 	// Amend percentages of the audio per frame vs. the highest in the file.
 	//return intermediateMap.map((v) => ({ percentMax: highest.dBs / v.dBs, ...v }))
+	if (highest.dbs === Number.NEGATIVE_INFINITY) {
+		console.log(localizeString('no_audio'))
+		process.exit(1)
+	}
 
 	// Obtain the average audio level of the file.
 	const average = intermediateMap.reduce((previous, current) => previous + resolveNumber(current.dBs, 0), 0) / intermediateMap.length
