@@ -57,7 +57,7 @@ module.exports = {
 		const [lastWidth, lastHeight] = [keyFrames[lastKf].width, keyFrames[lastKf].height]
 		const [nextWidth, nextHeight] = lastKf === keyFrames.length - 1 ? [lastWidth, lastHeight] : [keyFrames[lastKf + 1].width, keyFrames[lastKf + 1].height]
 
-		const interpolationArg = {t, lastWidth, lastHeight, nextWidth, nextHeight}
+		const interpolationArg = { t, lastWidth, lastHeight, nextWidth, nextHeight }
 
 		const interpolationMode = keyFrames[lastKf].interpolation.toLowerCase()
 		if (!interpolationModes[interpolationMode])
@@ -167,12 +167,14 @@ function infixToPostfix(expression) {
 			// parse the intermediate value as float here - we truncate later.
 			outputQueue.push(parseFloat(token))
 		} else if ('*/+-'.indexOf(token) !== -1) {
-			const o1 = token
-			const o2 = operatorStack[operatorStack.length - 1]
-			while ('*/+-'.indexOf(o2) !== -1 && ((operators[o1].associativity === 'Left' && operators[o1].precedence <= operators[o2].precedence) || (operators[o1].associativity === 'Right' && operators[o1].precedence < operators[o2].precedence))) {
-				outputQueue.push(operatorStack.pop())
+			if (operatorStack.length) {
+				const o1 = token
+				const o2 = operatorStack[operatorStack.length - 1];
+				if ((operators[o1].associativity === 'Left' && operators[o1].precedence <= operators[o2].precedence) || (operators[o1].associativity === 'Right' && operators[o1].precedence < operators[o2].precedence)) {
+					outputQueue.push(operatorStack.pop())
+				}
 			}
-			operatorStack.push(o1)
+			operatorStack.push(token)
 		} else if (token === '(') {
 			operatorStack.push(token)
 		} else if (token === ')') {
