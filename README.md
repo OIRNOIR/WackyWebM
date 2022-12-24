@@ -5,7 +5,7 @@
 ![GitHub Repo stars](https://img.shields.io/github/stars/oirnoir/wackywebm?style=for-the-badge)
 [![Discord](https://img.shields.io/discord/1003791722574266488?style=for-the-badge)](https://discord.gg/wackywebm)
 
-[WackyWebM](https://wackywebm.tech/) is a tool that allows you to create WebM video files with changing aspect ratios.
+WackyWebM is a tool that allows you to create WebM video files with changing aspect ratios.
 
 If you're having issues or want to share your custom modes, join the Discord Server at the bottom of this Readme.
 
