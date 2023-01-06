@@ -13,14 +13,19 @@ echo                            ^|___/
 
 echo.
 
+if "%1"=="--notoolcheck" echo Skipping FFmpeg, FFprobe, Node and npm checks && goto npmi
+
 :: test for dependencies.
 echo Testing for FFmpeg, FFprobe, Node and npm...
 
-where /q ffmpeg || echo FFmpeg could not be found && exit /B
-where /q ffprobe || echo FFprobe could not be found && exit /B
-where /q node || echo Node could not be found && exit /B
-where /q npm || echo npm could not be found && exit /B
+set allprogramsfound=1
+where /q ffmpeg || echo FFmpeg could not be found && set allprogramsfound=0
+where /q ffprobe || echo FFprobe could not be found && set allprogramsfound=0
+where /q node || echo Node could not be found && set allprogramsfound=0
+where /q npm || echo npm could not be found && set allprogramsfound=0
+if "%allprogramsfound%"=="0" echo If you believe this to be an error, run "run.bat --notoolcheck". && pause && exit /B
 
+:npmi
 echo Installing Dependencies - this might take a while the first time.
 call npm i >NUL 2>npm.log || (
   echo Issue installing dependencies using npm.
