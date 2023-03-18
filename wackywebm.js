@@ -183,6 +183,7 @@ function parseCommandArguments() {
 		// match any of the input types, in which case its also part of the path.
 		// split by + before trying to match to modes in order to support using multiple modes.
 		const inputModes = arg.toLowerCase().split('+')
+		// eslint-disable-next-line no-prototype-builtins
 		if (selectedModes.length === 0 && inputModes.every((x) => modes.hasOwnProperty(x))) selectedModes = inputModes
 		else videoPath.push(arg)
 	}
@@ -228,10 +229,8 @@ function buildLocations() {
 	workLocations.tempResizedFrames = path.join(workLocations.tempFolder, 'tempResizedFrames')
 }
 
-async function cleanupLocations() {
-	// always call on exit, even if erroneous, hopefully
-	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
-}
+// always call on exit, even if erroneous, hopefully
+const cleanupLocations = fs.promises.rm(workLocations.tempFolder, { recursive: true });
 
 function displayUsage() {
 	// for appropriately indenting all the argument aliases so they line up nicely
@@ -577,9 +576,13 @@ main(selectedModes, videoPath, {
 		compression: compressionLevel,
 		transparency: transparencyThreshold,
 		smoothing: smoothingLevel
-	}, outputPath).catch(e => {
+	}, outputPath).catch(async e => {
 		// nothing SHOULD ever go wrong with removing the directory, unless we somehow manage to error *before* it is created
-		cleanupLocations().error(()=>{})
+		try {
+			await cleanupLocations();
+		} catch {
+			// Do nothing if there is an error
+		}
 		console.error(localizeString('cli_crash'))
 		console.error(e)
 })
