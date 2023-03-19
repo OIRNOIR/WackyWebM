@@ -229,8 +229,10 @@ function buildLocations() {
 	workLocations.tempResizedFrames = path.join(workLocations.tempFolder, 'tempResizedFrames')
 }
 
-// always call on exit, even if erroneous, hopefully
-const cleanupLocations = fs.promises.rm(workLocations.tempFolder, { recursive: true });
+async function cleanupLocations() {
+	// always call on exit, even if erroneous, hopefully
+	await fs.promises.rm(workLocations.tempFolder, { recursive: true });
+}
 
 function displayUsage() {
 	// for appropriately indenting all the argument aliases so they line up nicely
