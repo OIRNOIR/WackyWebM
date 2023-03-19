@@ -231,7 +231,7 @@ function buildLocations() {
 
 async function cleanupLocations() {
 	// always call on exit, even if erroneous, hopefully
-	await fs.promises.rm(workLocations.tempFolder, { recursive: true });
+	await fs.promises.rm(workLocations.tempFolder, { recursive: true })
 }
 
 function displayUsage() {
@@ -578,13 +578,9 @@ main(selectedModes, videoPath, {
 		compression: compressionLevel,
 		transparency: transparencyThreshold,
 		smoothing: smoothingLevel
-	}, outputPath).catch(async e => {
+	}, outputPath).catch(e => {
 		// nothing SHOULD ever go wrong with removing the directory, unless we somehow manage to error *before* it is created
-		try {
-			await cleanupLocations();
-		} catch {
-			// Do nothing if there is an error
-		}
+		cleanupLocations().catch(()=>{})
 		console.error(localizeString('cli_crash'))
 		console.error(e)
 })
