@@ -52,7 +52,7 @@
 	"cli_crash": "While processing, the following error occurred:",
 	"invalid_time": "Invalid time specifier in keyframe file at line {line}: {input}",
 	"large_frame_specifier": "The time specifier's frame component at line {line} in the keyframe file equates to more than 1 second. Remember that it does not specify a specific fraction of a second.",
-	"not_enough_fields": "There are too few comma-seperated fields in the keyframe file at line {line}.",
-	"too_many_fields": "There are too many comma-seperated fields in the keyframe file at line {line}.",
+	"not_enough_fields": "There are too few comma-separated fields in the keyframe file at line {line}.",
+	"too_many_fields": "There are too many comma-separated fields in the keyframe file at line {line}.",
 	"unrecognized_interpolation": "Unrecognized interpolation mode {mode}."
 }
