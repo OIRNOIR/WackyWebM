@@ -66,5 +66,6 @@ Additionally, any 2 modes can be combined using a + symbol, like `Bounce+Shutter
 Common issues and questions are addressed in [the FAQ](docs/faq.md).
 
 If you encounter bugs or issues and want personal help, or have recommendations, feel free to join the Discord [here.](https://discord.gg/TmyJfq49AP)
-
-[![Discord Invite Widget](https://invidget.switchblade.xyz/EdrqJ6AMKF)](https://discord.gg/EdrqJ6AMKF)
+<a href="https://discord.gg/EdrqJ6AMKF">
+<img src="https://discord.com/api/guilds/1003791722574266488/widget.png?style=banner4">
+</a>
