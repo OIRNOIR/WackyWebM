@@ -67,4 +67,4 @@ Common issues and questions are addressed in [the FAQ](docs/faq.md).
 
 If you encounter bugs or issues and want personal help, or have recommendations, feel free to join the Discord [here.](https://discord.gg/TmyJfq49AP)
 
-[![Discord Invite Widget](https://invidget.switchblade.xyz/EdrqJ6AMKF)](https://discord.gg/EdrqJ6AMKF)
+[![Invite Link to the WackyWebM Discord Server](https://discord.com/api/guilds/1003791722574266488/widget.png?style=banner4)](https://discord.gg/TmyJfq49AP)
