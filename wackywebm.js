@@ -2,7 +2,7 @@
 
 /*
 Make WebM files with changing aspect ratios
-By OIRNOIR#0032
+By OIRNOIR (oirnoir on Discord)
 */
 
 const path = require('path')
@@ -238,7 +238,7 @@ function displayUsage() {
 	// for appropriately indenting all the argument aliases so they line up nicely
 	const longestKeys = argsConfig.map((a) => a.keys.join(',')).sort((a, b) => b.length - a.length)[0].length
 	const Usage =
-		'WackyWebM by OIRNOIR#0032\n' +
+		'WackyWebM by OIRNOIR\n' +
 		'Usage: node wackywebm.js [arguments] [mode] <input_file>\n' +
 		argsConfig.map((arg) => `\t${(arg.keys.join(',') + ':').padEnd(longestKeys + 1, ' ')}  ${arg.description}`).join('\n') +
 		'\nRecognized Modes:\n' +
