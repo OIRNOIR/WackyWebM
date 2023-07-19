@@ -23,14 +23,14 @@
 	},
 	"homepage": "https://github.com/OIRNOIR/WackyWebM#readme",
 	"devDependencies": {
-		"eslint": "^8.20.0",
-		"prettier": "2.7.1",
-		"terminal-kit": "^2.5.1"
+		"eslint": "^8.45.0",
+		"prettier": "^3.0.0",
+		"terminal-kit": "^3.0.0"
 	},
 	"engines": {
-    		"node": ">=16.15.0",
-    		"npm": ">=8.17.0"
-  	},
+		"node": ">=16.15.0",
+		"npm": ">=8.17.0"
+	},
 	"dependencies": {
 		"upng-js": "^2.1.0"
 	}
