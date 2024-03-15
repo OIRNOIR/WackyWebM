@@ -33,7 +33,7 @@ Once downloaded, extract the archive to some easily-memorable path (typically `C
 
 After extracting the archive, set the environment PATH variable to include FFmpeg's bin folder:
 
-Open `cmd` (the syntax is different for powershell, so use cmd if you want to follow along with this guide) with permissions to write to system variables and execute the command `setx /m PATH <ffmpeg path>;%PATH%`, where `<ffmpeg path>` is just the path of the `bin` folder within the extracted archive. For example, for the "typical" ffmpeg path of `C:\ffmpeg`, the command would be `setx /m PATH C:\ffmpeg\bin;%PATH%`.
+Open `cmd` (the syntax is different for powershell, so use cmd if you want to follow along with this guide) with permissions to write to system variables and execute the command `setx /m PATH "<ffmpeg path>;%PATH%"`, where `<ffmpeg path>` is just the path of the `bin` folder within the extracted archive. For example, for the "typical" ffmpeg path of `C:\ffmpeg`, the command would be `setx /m PATH "C:\ffmpeg\bin;%PATH%"`.
 
 To check if everything went right, open a new terminal (not necessarily with administrator permissions) and run `ffmpeg`. If this displays version information, you are done. If it instead shows an error about ffmpeg not being recognized as a command, something went wrong.
 
