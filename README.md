@@ -1,9 +1,10 @@
+# Important: As of 14 March 2024, WackyWebM has been discontinued due to Discord patching the use of these video files within the client. Thank you for using WackyWebM!
+
 # WackyWebM
 
 [![Weblate project translated](https://img.shields.io/weblate/progress/wackywebm?server=https%3A%2F%2Ftranslate.kiaibot.com&style=for-the-badge)](https://translate.kiaibot.com/projects/wackywebm/wackywebm)
 ![GitHub contributors](https://img.shields.io/github/contributors/oirnoir/wackywebm?style=for-the-badge)
 ![GitHub Repo stars](https://img.shields.io/github/stars/oirnoir/wackywebm?style=for-the-badge)
-[![Discord](https://img.shields.io/discord/1003791722574266488?style=for-the-badge)](https://discord.gg/wackywebm)
 
 WackyWebM is a tool that allows you to create WebM video files with changing aspect ratios.
 
@@ -65,6 +66,4 @@ Additionally, any 2 modes can be combined using a + symbol, like `Bounce+Shutter
 
 Common issues and questions are addressed in [the FAQ](docs/faq.md).
 
-If you encounter bugs or issues and want personal help, or have recommendations, feel free to join the Discord [here.](https://discord.gg/TmyJfq49AP)
-
-[![Discord Invite Widget](https://invidget.switchblade.xyz/EdrqJ6AMKF)](https://discord.gg/EdrqJ6AMKF)
+~~If you encounter bugs or issues and want personal help, or have recommendations, feel free to join the Discord.~~ Update 14th March 2024: The Discord has now been archived.
